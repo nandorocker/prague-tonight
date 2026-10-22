@@ -8,7 +8,7 @@ import type { FamilyId, Span } from '../types';
 import { esc } from '../core/format';
 import { DEFAULT_FILTERS, store } from '../core/store';
 import { clock, dayLabel, fromWallMinutes, SPAN_LABEL, SPANS, wallMinutes } from '../core/time';
-import { FAMILIES, FAMILY_NAME } from '../posters/assign';
+import { eligibleFamilies, FAMILIES, FAMILY_CLASS, FAMILY_DESCRIPTION, FAMILY_NAME, STYLE_CLASSES, STYLE_CLASS_NAME } from '../posters/assign';
 import { fitDom } from '../posters/fit';
 import { renderPoster } from '../posters/render';
 import { clip, toast } from './common';
@@ -87,6 +87,7 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
         `<ol class="ops-deck">${cur.deck
           .map((e, i) => {
             const fam = cur.family.get(e.id)!;
+            const fitting = eligibleFamilies(e);
             const d = decisions[e.id];
             return `<li data-id="${esc(e.id)}">
               <span class="n">${i + 1}</span>
@@ -94,7 +95,7 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
               <div class="info"><b>${esc(e.displayTitle ?? e.title)}</b>
                 <small>${e.start ? `${esc(dayLabel(e.night!))} ${clock(e.start)}` : ''} · ${esc(e.venue?.name ?? '')}${d ? ` · <em>${d === 'pass' ? 'passed' : 'saved'}</em>` : ''}</small>
                 <div class="acts">
-                  <select data-op="family" aria-label="Poster style">${FAMILIES.map((f) => `<option value="${f}" ${f === fam ? 'selected' : ''}>${FAMILY_NAME[f]}</option>`).join('')}</select>
+                  <select data-op="family" aria-label="Poster style">${([...FAMILIES, 'plain'] as FamilyId[]).map((f) => `<option value="${f}" ${f === fam ? 'selected' : ''} ${f !== 'plain' && !fitting.includes(f) ? 'disabled' : ''}>${esc(FAMILY_NAME[f])}</option>`).join('')}</select>
                   <button type="button" data-op="pin" class="${o.pinned.includes(e.id) ? 'on' : ''}">${o.pinned.includes(e.id) ? 'Pinned' : 'Pin'}</button>
                   <button type="button" data-op="remove">Remove</button>
                 </div>
@@ -124,8 +125,10 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
       ${section(
         'lab',
         'Poster lab',
-        'one event in every style',
-        `<select id="lab-pick">${cur.index
+        `${FAMILIES.length} personas · ${STYLE_CLASSES.length} classes`,
+        `<p class="ops-hint">Same event, different treatments. Compare how each family handles the facts and source blurb.</p>
+        <label class="lab-label" for="lab-pick">Event to preview</label>
+        <select id="lab-pick">${cur.index
           .map((e) => `<option value="${esc(e.id)}" ${e.id === (labEventId ?? cur.deck[0]?.id) ? 'selected' : ''}>${esc(clip(e.title, 60))}</option>`)
           .join('')}</select><div class="ops-lab"></div>`,
       )}
@@ -147,12 +150,16 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
     const e = app.byId.get(id);
     const lab = root.querySelector<HTMLElement>('.ops-lab');
     if (!e || !lab) return;
-    lab.innerHTML = ([...FAMILIES, 'plain'] as FamilyId[])
-      .map((f) => {
-        const r = renderPoster(e, f);
-        return `<figure><div class="thumb">${r.html}</div><figcaption>${esc(FAMILY_NAME[f])}${r.family !== f ? ' → plain' : ''}</figcaption></figure>`;
-      })
-      .join('');
+    const preview = (f: FamilyId) => {
+      const r = renderPoster(e, f);
+      const description = f === 'plain' ? 'Full-title typography when an expressive treatment cannot fit.' : FAMILY_DESCRIPTION[f];
+      return `<figure><div class="thumb">${r.html}</div><figcaption><b>${esc(FAMILY_NAME[f])}</b><small>${esc(description)}</small>${r.family !== f ? '<small>Showing plain fallback to keep the full title.</small>' : ''}</figcaption></figure>`;
+    };
+    lab.innerHTML = STYLE_CLASSES.map((styleClass) => `<section class="lab-class" aria-labelledby="lab-${styleClass}">
+      <h3 id="lab-${styleClass}">${esc(STYLE_CLASS_NAME[styleClass])}</h3>
+      <div class="lab-grid">${FAMILIES.filter((f) => FAMILY_CLASS[f] === styleClass).map(preview).join('')}</div>
+    </section>`).join('') + `<details class="lab-fallback"><summary>Plain fallback</summary>${preview('plain')}</details>`;
+    lab.querySelector('.lab-fallback')!.addEventListener('toggle', () => fitDom(lab));
     void document.fonts.ready.then(() => fitDom(lab));
   };
   root.querySelector('#lab-pick')!.addEventListener('change', drawLab);

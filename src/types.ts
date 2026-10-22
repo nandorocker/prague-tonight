@@ -106,6 +106,8 @@ export type FamilyId =
   | 'typewall'
   | 'quiet'
   | 'collage'
+  | 'culture'
+  | 'geometric'
   | 'plain';
 
 /** How many nights ahead the deck looks, starting tonight. */

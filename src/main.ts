@@ -4,6 +4,8 @@ import '@fontsource/fira-sans/400.css';
 import '@fontsource/fira-sans/600.css';
 import '@fontsource/fira-sans/700.css';
 import '@fontsource/instrument-serif/400.css';
+import '@fontsource/instrument-serif/400-italic.css';
+import '@fontsource/baloo-2/800.css';
 import './styles.css';
 
 import { App } from './app';

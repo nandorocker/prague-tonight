@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@fontsource/baloo-2':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/fira-sans':
         specifier: ^5.3.0
         version: 5.3.0
@@ -178,6 +181,9 @@ packages:
     engines: {node: '>=12'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource/baloo-2@5.3.0':
+    resolution: {integrity: sha512-CBuxZ27jvMmD5+KaaPkMWv/yjdRNppVAd5/002yAyvyQyLNL3aZCbkx6gbAT/bjxPd1A0VMdDQjfcELI8chccQ==}
 
   '@fontsource/fira-sans-extra-condensed@5.3.0':
     resolution: {integrity: sha512-AiwnJulSkWNY0SYSOmdf3oFO9G8Soc3FYyYS81BWXVUSLqj2V/YXf4vC9xTohLOPIbXnDbpeelje692zLT5O6w==}
@@ -1022,6 +1028,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.21.5':
     optional: true
+
+  '@fontsource/baloo-2@5.3.0': {}
 
   '@fontsource/fira-sans-extra-condensed@5.3.0': {}
 
