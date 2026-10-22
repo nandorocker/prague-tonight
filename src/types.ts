@@ -52,6 +52,8 @@ export interface SourceRecord {
   genre?: string;
   language?: { value: string; verified: boolean };
   description?: string;
+  /** Two or three lines on what the event is, for the poster's info band. */
+  blurb?: string;
   status: 'scheduled' | 'canceled';
   /** Result of the last link validation. */
   sourceAlive: boolean;
@@ -84,6 +86,7 @@ export interface PragueEvent {
   genre?: string;
   language?: string;
   description?: string;
+  blurb?: string;
   canceled: boolean;
   sourceAlive: boolean;
   confidence: number;
@@ -105,8 +108,11 @@ export type FamilyId =
   | 'collage'
   | 'plain';
 
+/** How many nights ahead the deck looks, starting tonight. */
+export type Span = 1 | 3 | 7;
+
 export interface WindowDef {
-  id: 'tonight' | 'next';
+  span: Span;
   label: string;
   dateLabel: string;
   nights: DateKey[];

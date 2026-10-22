@@ -75,6 +75,7 @@ interface Template {
   local?: boolean;
   lang?: [string, boolean];
   desc?: string;
+  blurb?: string;
   dupes?: string[];
   canceled?: boolean;
   gone?: boolean;
@@ -160,6 +161,129 @@ const T: Template[] = [
   { id: 'rooftop-jazz', title: 'Rooftop Jazz', cat: 'music', genre: 'Jazz', venue: 'pod', days: [2, 4, 6], start: '19:00', price: 200, canceled: true },
   { id: 'ghost', title: 'Ghost Listing Concert', cat: 'music', genre: 'Indie', venue: 'trznice', days: [1, 3, 5, 6], start: '20:00', price: 150, gone: true },
 ];
+
+/**
+ * Two-to-three-line blurbs for the poster info band: what the event is, in
+ * plain words. Keyed by template id, or by title for venue programmes.
+ */
+const BLURBS: Record<string, string> = {
+  'small-sounds': 'One album played start to finish on a proper hi-fi. Seated, lights low, phones away.',
+  'intimate-jazz': 'The house trio plays standards and originals in the cellar room. Two sets with a break.',
+  'below-ground': 'Six hours of driving techno in a former air-raid shelter. Two rooms, one long night.',
+  'night-shift': 'A late live set from a rotating local band. Starts at eleven, plays until the bar closes.',
+  'three-bands': 'Three local alternative bands, thirty-five minutes each, in a small brick basement.',
+  leftfield: 'Broken beats, odd tempos and live modular sets in the pavilion above Letná park.',
+  'harp-tape': 'Solo harp run through reel-to-reel tape loops, performed in the library reading room.',
+  'brass-boat': 'A ten-piece brass band plays the deck of a moored river boat. Standing room, bar open.',
+  'folk-revival': 'Open session of Czech and Moravian folk tunes. Bring an instrument or just sit and listen.',
+  'vinyl-club': 'Original pressings of Czech jazz from 1965 to 1975, played and introduced by a collector.',
+  choir: 'Learn three songs by ear in an hour, then sing them together. No auditions, no experience.',
+  'noise-matinee': 'An afternoon of loud, textured noise sets in the gallery. Earplugs at the door.',
+  'piano-midnight': 'A solo pianist plays quiet late-night pieces in a candlelit loft. Seated, small room.',
+  balkan: 'A Balkan brass band plays a dance set, followed by DJs spinning gypsy punk and cumbia.',
+  cypher: 'Open rap cypher with a live beatmaker. Sign up at the door to take the mic, or just watch.',
+  organ: 'Contemporary pieces for pipe organ and live electronics in a resonant concert hall.',
+  'cinema-motion': 'A silent classic screened with a live score from a three-piece band beside the screen.',
+  'new-wave': 'Two Czech New Wave features from the 1960s with a short break. English subtitles.',
+  'edge-docs': 'Short documentaries about life on the edges of Prague, with the filmmakers in the room.',
+  shorts: 'A programme of eight short films, from comedy to animation, picked by the venue’s film club.',
+  'animation-long': 'Rare Czech animated shorts from the 60s and 70s with live piano, then a Q&A.',
+  'student-docs': 'New short documentaries by film school students, each followed by a talk with its director.',
+  'words-out-loud': 'Open mic for poems, stories and songs. Five minutes each. Sign up from 19:30.',
+  trams: 'An illustrated talk on how Prague built its tram network, with archive photographs.',
+  signs: 'A designer walks through the history of Prague’s street signs, shopfronts and lettering.',
+  'twenty-slides': 'Eight speakers, twenty slides each, twenty seconds per slide. Topics are a surprise.',
+  'science-bar': 'A researcher explains their work in plain Czech over a beer, then takes questions.',
+  'two-languages': 'Poets read the same poems in Czech and English, side by side, then talk about translating.',
+  'after-opening': 'Opening night for a new group show. Drinks, a short welcome and the artists in the room.',
+  riso: 'Prints, zines and posters made on risograph machines by local studios. Most are for sale.',
+  utopias: 'Photographs and models of socialist-era housing estates and the futures they promised.',
+  'gallery-walk': 'A guided late-night walk through three galleries in Holešovice, with a drink at each.',
+  'slide-night': 'Photographers show 35mm slides on a real projector and tell the stories behind them.',
+  draw: 'An open drawing evening with a model and still lifes. Paper and pencils are provided.',
+  'bike-repair': 'Volunteer mechanics help you fix your own bike. Tools and spare parts on hand.',
+  ceramics: 'A first lesson on the wheel: centre the clay, throw a bowl, take it home after firing.',
+  conversation: 'Practise Czech at small tables with native speakers. All levels, tea included.',
+  boardgames: 'A shelf of two hundred games and staff who teach the rules. Come alone or bring friends.',
+  'repair-cafe': 'Bring a broken lamp, toaster or jacket. Volunteers help you repair it for free.',
+  zine: 'Make your own zine with collage, typewriters and a photocopier. Materials provided.',
+  swing: 'A short beginners’ lesson, then social dancing to swing records in the courtyard hall.',
+  supper: 'A shared three-course dinner at long tables, cooked by a different neighbour each month.',
+  'plant-swap': 'Bring a cutting or a pot, take one home. Tea and advice from the garden volunteers.',
+  'comedy-all-night': 'Six stand-up comedians, back to back, with a host keeping it moving. In English.',
+  improv: 'An improv troupe builds scenes from audience suggestions. No two nights are the same.',
+  'standup-open': 'Open mic stand-up: new comics trying new material. Five minutes each, cheap beer.',
+  puppets: 'Marionettes for grown-ups: a dark, funny show from a Prague puppet company.',
+  weightless: 'An hour-long contemporary dance piece for five dancers about gravity and falling.',
+  cabaret: 'Songs, sketches and burlesque from Žižkov’s resident cabaret troupe. Late show.',
+  'theatre-short': 'Five short plays by young Czech writers, staged in one evening. In Czech.',
+  chamber: 'A string quartet plays Dvořák and Martinů in a converted Karlín studio.',
+  'static-bloom': 'Hard, fast techno in a former industrial hall. Four DJs, one room, no photos.',
+  karaoke: 'Disco and pop karaoke with a live host, a glitter ball and a long song list.',
+  'slow-techno': 'Slow, deep techno to end the weekend. Starts early, finishes at two.',
+  'queer-dance': 'A queer dance party with pop, house and disco. Everyone welcome, door policy enforced.',
+  'popup-rave': 'A one-off rave in an unannounced location. The address is sent on the day.',
+  'midweek-disco': 'Disco, boogie and Italo records in the basement club. Free entry before 23:00.',
+  'rooftop-jazz': 'Jazz quartet on the roof terrace, weather permitting, with views over Karlín.',
+  ghost: 'An indie band plays the main hall with a local support act.',
+
+  // Venue programmes, keyed by title.
+  'Cinema Under the Tracks': 'Repertory screening in the cinema under the railway viaduct. Classic print, small bar.',
+  'Animated Shorts for Grown-ups': 'Animated short films for adults from festivals around Europe.',
+  'Polish Comedies of the 70s': 'Two Polish comedies from the 1970s, with English subtitles.',
+  'Wrong Answers Film Quiz': 'A film quiz where the funniest wrong answer scores as well as the right one. Teams of four.',
+  'Sci-fi on 35mm': 'A classic science-fiction feature screened from a 35mm print.',
+  'Garage Punk Triple Bill': 'Three fast, loud garage-punk bands in one evening. Standing only.',
+  'Mlýn Jazz Jam': 'The house band plays a set, then the stage opens to anyone who brings an instrument.',
+  'Dub Sound System Night': 'A homemade sound system plays dub and reggae on heavy bass until three.',
+  'Surf Rock Revival': 'Reverb-heavy instrumental surf rock from two Prague bands.',
+  'Shoegaze Sunday': 'Two shoegaze bands, loud guitars and a lot of fog.',
+  'Folk Dances of Moravia': 'A caller teaches Moravian folk dances to a live band. No partner needed.',
+  'Family Puppet Matinée': 'A traditional marionette show for children and their grown-ups. About an hour.',
+  'String Quartet: Janáček & Haas': 'A string quartet plays Janáček’s Intimate Letters and Haas’s second quartet.',
+  'Neighbourhood Film Club': 'A monthly film club: one feature, then a short conversation over tea.',
+  'Tea & Tanpura': 'Indian classical music on sitar and tanpura in a tearoom. Seated on cushions.',
+  'Silent Reading Party': 'Bring a book and read in good company for an hour. Quiet music, tea, no talking.',
+  'Haiku Writing Circle': 'A short introduction to haiku, then write and share your own. In English.',
+  'Oud by Candlelight': 'Solo oud and Arabic maqam improvisations in a candlelit tearoom.',
+  'Warehouse Techno': 'All-night techno in a Strašnice warehouse. Two rooms, runs until five.',
+  'Screen Printing Open Studio': 'Print your own tote or poster with help from the studio team. Materials included.',
+  'Strašnice Flea Night': 'An evening flea market with vintage clothes, records and street food.',
+  'Breakbeat Basement': 'Breakbeat, jungle and drum and bass in a low basement room.',
+  'Rowing Club Movie Night': 'A feature film screened in the boathouse of an old rowing club.',
+  'River Stories: Floods of Prague': 'A local historian on the great Vltava floods, with photos from the archive.',
+  'Accordion & Wine': 'An accordion duo plays French and Czech songs. Moravian wine by the glass.',
+  'Readings from Banned Books': 'Actors read from books banned under communism, introduced by a literary historian.',
+  'Book Launch & Conversation': 'An author presents a new novel, reads a chapter and signs copies.',
+  'Translators’ Evening': 'Literary translators talk about the books they are working on and read short extracts.',
+  'Second-hand Vinyl Hour': 'Crate-dig through second-hand records while the owner plays favourites.',
+  'Opening: Soft Machines': 'Opening of a show of kinetic and robotic sculptures by four young artists.',
+  'Artist Talk: Mapping Karlín': 'An artist talks about a year spent drawing and mapping Karlín street by street.',
+  'Life Drawing': 'Untutored life drawing with a model. Short poses first, then longer ones.',
+  'Curator Walk-through': 'The curator leads a tour of the current exhibition and answers questions.',
+  'Tram Line Trivia': 'A pub quiz on Prague, trams and general knowledge. Teams of up to five.',
+  'Indie Pop Night': 'DJs play indie pop, Britpop and indie dance until three.',
+  'Songwriters in the Round': 'Three songwriters sit on stage together and take turns playing their songs.',
+  'Karaoke Rescue Squad': 'Karaoke with a live backing band that rescues anyone who loses the tune.',
+  'Baroque by Night': 'Baroque chamber music on period instruments, by candlelight.',
+  'Science Café: Sleep': 'A sleep researcher explains what happens in the brain at night, then takes questions.',
+  'Choral Evensong': 'A chamber choir sings an evening service of English and Czech choral music.',
+  'Stand-up in Czech': 'Four Czech comedians, one host, in Czech.',
+  'Ambient Lounge': 'Ambient and downtempo sets for sitting and listening. Beanbags provided.',
+  'Late Jazz Session': 'A late jazz session with a rotating line-up of Prague players.',
+  'Synth Meetup': 'Bring a synth or come and play with others’. Show-and-tell and an open jam.',
+  'Electronic Live Acts': 'Three live electronic acts with hardware only, no laptops.',
+  'Physical Theatre: Hold On': 'A physical theatre piece for three performers, wordless and about an hour long.',
+  'Improv Jam': 'Open improv jam: anyone can jump on stage for a scene. Hosted by the house team.',
+  'Clown Cabaret': 'Clowns, mime and slapstick in a late-night cabaret for adults.',
+  'New Plays Reading': 'Actors read new Czech plays from scripts, followed by a talk with the writers.',
+  'Woodworking Basics': 'Learn to measure, saw and join wood, and make a small box to take home.',
+  'Fix Your Lamp Night': 'Bring a broken lamp and rewire it with help from the workshop team.',
+  'Upholstery Evening': 'Re-cover a stool or chair seat with fabric, foam and a staple gun.',
+  'Radio Drama Live Taping': 'Watch a radio play being recorded live, sound effects and all.',
+  'Pub Philosophy': 'A philosopher poses a question and the room argues it out. No reading needed.',
+  'Swing Records & Dancing': 'Swing records from the 30s and 40s and a dance floor. Beginners welcome.',
+};
 
 /**
  * Weekly programmes for smaller venues: each night a venue may host one item
@@ -259,7 +383,7 @@ function programmes(date: DateKey): Template[] {
     const h = hash(`${venue}:${date}`);
     if (h % 10 === 0) continue; // dark night
     const [title, cat, genre, start, price, end] = slots[h % slots.length];
-    out.push({ id: fold(title).replace(/ /g, '-'), title, cat, genre, venue, days: ALL, start, end, price, local: h % 3 === 0, oneOff: h % 7 === 0 });
+    out.push({ id: fold(title).replace(/ /g, '-'), title, cat, genre, venue, days: ALL, start, end, price, local: h % 3 === 0, oneOff: h % 7 === 0, blurb: BLURBS[title] });
   }
   return out;
 }
@@ -322,6 +446,7 @@ function record(t: Template, date: DateKey, overrides: Partial<SourceRecord> = {
     genre: t.genre,
     language: t.lang ? { value: t.lang[0], verified: t.lang[1] } : undefined,
     description: t.desc,
+    blurb: t.blurb ?? BLURBS[t.id],
     status: t.canceled ? 'canceled' : 'scheduled',
     sourceAlive: !t.gone,
     confidence: t.conf ?? (kind === 'aggregator' ? 0.7 : 0.9),
@@ -362,7 +487,19 @@ export function buildFixtures(tonight: DateKey): SourceRecord[] {
         const start = ['22:00', '22:30', '23:00', '23:30'][i % 4];
         out.push(
           record(
-            { id: `dj-${i}`, title: `DJ Night: ${dj}`, cat: 'nightlife', genre: 'DJ set', venue, days: [wd], start, end: '03:00', price: 150, src: 'aggregator' },
+            {
+              id: `dj-${i}`,
+              title: `DJ Night: ${dj}`,
+              cat: 'nightlife',
+              genre: 'DJ set',
+              venue,
+              days: [wd],
+              start,
+              end: '03:00',
+              price: 150,
+              src: 'aggregator',
+              blurb: `${dj} plays one long set of house and techno, from opening until three.`,
+            },
             date,
           ),
         );

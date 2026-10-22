@@ -1,5 +1,6 @@
 import type { FamilyId, PragueEvent, WallTime, WindowDef } from '../types';
 import { assignFamilies, familyFor } from '../posters/assign';
+import { fold } from './format';
 import { hash } from './rng';
 import { isNightOver, minutesBetween, wallMinutes } from './time';
 
@@ -114,11 +115,15 @@ export function diversify(candidates: PragueEvent[], now: WallTime, size: number
   const cat = new Map<string, number>();
   const venue = new Map<string, number>();
   const district = new Map<string, number>();
+  // A weekly show appears once per deck, whichever night scores best.
+  const series = new Set<string>();
+  const seriesOf = (e: PragueEvent) => `${e.venue!.id}|${fold(e.title)}`;
   const left = new Set(candidates);
 
   const value = (e: PragueEvent, strict: boolean): number => {
     if (strict && (cat.get(e.category) ?? 0) >= catCap) return -Infinity;
     if (strict && (venue.get(e.venue!.id) ?? 0) >= venueCap) return -Infinity;
+    if (strict && series.has(seriesOf(e))) return -Infinity;
     let v = base.get(e.id)!;
     const last = picked.slice(-2);
     if (last.at(-1)?.category === e.category) v -= 0.3;
@@ -141,12 +146,18 @@ export function diversify(candidates: PragueEvent[], now: WallTime, size: number
     cat.set(best.category, (cat.get(best.category) ?? 0) + 1);
     venue.set(best.venue!.id, (venue.get(best.venue!.id) ?? 0) + 1);
     district.set(best.venue!.district!, (district.get(best.venue!.district!) ?? 0) + 1);
+    series.add(seriesOf(best));
   }
   return picked;
 }
 
-export function deckSize(eligible: number): number {
-  return Math.min(eligible, DECK_MAX, Math.max(DECK_MIN, Math.round(eligible * 0.7)));
+/** Upper bound on the deck for a span: 35 for one night, more for longer ranges. */
+export function deckMax(nights = 1): number {
+  return Math.round(DECK_MAX * Math.sqrt(nights));
+}
+
+export function deckSize(eligible: number, nights = 1): number {
+  return Math.min(eligible, deckMax(nights), Math.max(DECK_MIN, Math.round(eligible * 0.7)));
 }
 
 export function curate(
@@ -180,7 +191,7 @@ export function curate(
     (overrides.pinned.includes(e.id) ? pinned : candidates).push(e);
   }
 
-  const size = deckSize(candidates.length + pinned.length);
+  const size = deckSize(candidates.length + pinned.length, window.nights.length);
   const picked = diversify(candidates, now, Math.max(0, size - pinned.length), window.nights.length);
   const deck = [...pinned, ...picked];
   const chosen = new Set(deck.map((e) => e.id));

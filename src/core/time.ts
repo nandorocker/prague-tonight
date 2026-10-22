@@ -1,4 +1,4 @@
-import type { DateKey, WallTime, WindowDef } from '../types';
+import type { DateKey, Span, WallTime, WindowDef } from '../types';
 
 /** The city night runs until this hour the following morning (Prague time). */
 export const NIGHT_CUTOFF_HOUR = 5;
@@ -104,35 +104,24 @@ export function clock(t: WallTime): string {
   return t.slice(11, 16);
 }
 
-/**
- * The two time windows offered at the top of the deck.
- * Friday night offers Tonight + This weekend (Sat + Sun); every other night
- * offers Tonight + Tomorrow.
- */
-export function windowsFor(now: WallTime): [WindowDef, WindowDef] {
+export const SPANS: Span[] = [1, 3, 7];
+
+export const SPAN_LABEL: Record<Span, string> = { 1: 'Tonight', 3: 'Next 3 days', 7: 'Next 7 days' };
+
+/** Nights from tonight onward. A night runs until 05:00 the next morning. */
+export function windowFor(now: WallTime, span: Span): WindowDef {
   const tonight = nightOf(now);
-  const first: WindowDef = {
-    id: 'tonight',
-    label: 'Tonight',
-    dateLabel: dayLabel(tonight),
-    nights: [tonight],
+  const nights = Array.from({ length: span }, (_, i) => addDays(tonight, i));
+  const last = nights[nights.length - 1];
+  return {
+    span,
+    label: SPAN_LABEL[span],
+    dateLabel:
+      span === 1
+        ? dayLabel(tonight)
+        : tonight.slice(5, 7) === last.slice(5, 7)
+          ? `${weekdayShort(tonight)} ${Number(tonight.slice(8))} – ${dayLabel(last)}`
+          : `${dayLabel(tonight)} – ${dayLabel(last)}`,
+    nights,
   };
-  if (weekday(tonight) === 5) {
-    const sat = addDays(tonight, 1);
-    const sun = addDays(tonight, 2);
-    return [
-      first,
-      {
-        id: 'next',
-        label: 'Weekend',
-        dateLabel:
-          sat.slice(5, 7) === sun.slice(5, 7)
-            ? `${weekdayShort(sat)} ${Number(sat.slice(8))} – ${weekdayShort(sun)} ${shortDate(sun)}`
-            : `${weekdayShort(sat)} ${shortDate(sat)} – ${weekdayShort(sun)} ${shortDate(sun)}`,
-        nights: [sat, sun],
-      },
-    ];
-  }
-  const next = addDays(tonight, 1);
-  return [first, { id: 'next', label: 'Tomorrow', dateLabel: dayLabel(next), nights: [next] }];
 }

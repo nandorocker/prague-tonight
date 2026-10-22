@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isNightOver, nightOf, toPragueWall, windowsFor } from '../src/core/time';
+import { isNightOver, nightOf, toPragueWall, windowFor } from '../src/core/time';
 
 describe('city-night clock', () => {
   it('treats early morning as the previous night', () => {
@@ -7,30 +7,20 @@ describe('city-night clock', () => {
     expect(nightOf('2026-10-24T05:00')).toBe('2026-10-24');
   });
 
-  it('offers Tonight + Tomorrow on a Thursday', () => {
-    const [a, b] = windowsFor('2026-10-22T18:45');
-    expect(a.nights).toEqual(['2026-10-22']);
-    expect(b.label).toBe('Tomorrow');
-    expect(b.nights).toEqual(['2026-10-23']);
-    expect(a.dateLabel).toBe('THU 22 OCT');
-  });
-
-  it('offers Tonight + Weekend on Friday, without duplicating Friday', () => {
-    const [a, b] = windowsFor('2026-10-23T20:00');
-    expect(a.nights).toEqual(['2026-10-23']);
-    expect(b.label).toBe('Weekend');
-    expect(b.nights).toEqual(['2026-10-24', '2026-10-25']);
+  it('builds Tonight, 3-day and 7-day ranges starting tonight', () => {
+    const t = windowFor('2026-10-22T18:45', 1);
+    expect(t.nights).toEqual(['2026-10-22']);
+    expect(t.label).toBe('Tonight');
+    expect(t.dateLabel).toBe('THU 22 OCT');
+    const three = windowFor('2026-10-22T18:45', 3);
+    expect(three.nights).toEqual(['2026-10-22', '2026-10-23', '2026-10-24']);
+    expect(three.dateLabel).toBe('THU 22 – SAT 24 OCT');
+    expect(windowFor('2026-10-29T18:45', 7).dateLabel).toBe('THU 29 OCT – WED 4 NOV');
   });
 
   it('is still Friday night at 02:00 Saturday', () => {
-    const [a, b] = windowsFor('2026-10-24T02:00');
-    expect(a.nights).toEqual(['2026-10-23']);
-    expect(b.label).toBe('Weekend');
-  });
-
-  it('offers Sunday on Saturday and Monday on Sunday', () => {
-    expect(windowsFor('2026-10-24T12:00')[1].nights).toEqual(['2026-10-25']);
-    expect(windowsFor('2026-10-25T12:00')[1].nights).toEqual(['2026-10-26']);
+    expect(windowFor('2026-10-24T02:00', 1).nights).toEqual(['2026-10-23']);
+    expect(windowFor('2026-10-24T02:00', 3).nights[0]).toBe('2026-10-23');
   });
 
   it('ends a night at the 05:00 cutoff', () => {

@@ -1,12 +1,11 @@
 import type { App } from '../app';
-import type { PragueEvent, WindowDef } from '../types';
+import type { PragueEvent } from '../types';
 import { esc, priceText } from '../core/format';
 import { store, type SavedItem } from '../core/store';
 import { clock, dayLabel, isNightOver, wallMinutes } from '../core/time';
 import { posterTitle } from '../posters/assign';
-import { familyColor } from '../posters/render';
+import { familyColor, star } from '../posters/render';
 import { badges, icon, inkOn, statusOf, toast } from './common';
-import { windowSwitch } from './deck';
 import { PRAGUE_MAP, project } from './map';
 
 interface Row {
@@ -15,10 +14,18 @@ interface Row {
   start?: string;
 }
 
-function rowsFor(app: App, w: WindowDef): Row[] {
+type Scope = 'tonight' | 'upcoming';
+
+/** My Night opens on tonight every time the view is entered fresh. */
+let scope: Scope = 'tonight';
+export function resetNightScope() {
+  scope = 'tonight';
+}
+
+function rowsFor(app: App, which: Scope): Row[] {
   return store
     .saves()
-    .filter((s) => w.nights.includes(s.night) && !isNightOver(s.night, app.now))
+    .filter((s) => (which === 'tonight' ? s.night === app.tonight : s.night >= app.tonight) && !isNightOver(s.night, app.now))
     .map((saved) => {
       const e = app.byId.get(saved.id);
       return { saved, e, start: e?.start ?? saved.snap.start };
@@ -31,32 +38,48 @@ function rowsFor(app: App, w: WindowDef): Row[] {
     );
 }
 
+/** Saves that are still ahead, for the nav badge. */
+export function upcomingCount(app: App): number {
+  return rowsFor(app, 'upcoming').length;
+}
+
 export function renderNight(app: App, root: HTMLElement, mode: 'list' | 'map', rerender: () => void) {
-  const w = app.window;
-  const rows = rowsFor(app, w);
-  const counts = app.windows.map((x) => rowsFor(app, x).length);
+  const rows = rowsFor(app, scope);
+  const nTonight = rowsFor(app, 'tonight').length;
+  const nUpcoming = rowsFor(app, 'upcoming').length;
   root.innerHTML = `
     <div class="page-head">
       <h1 class="display" tabindex="-1">My Night</h1>
-      <p class="sub">${rows.length ? `${rows.length} saved` : 'Nothing saved'} · ${esc(w.dateLabel)}</p>
+    </div>
+    <div class="night-bar">
+      <div class="seg" role="group" aria-label="Which nights">
+        <button type="button" data-scope="tonight" class="${scope === 'tonight' ? 'on' : ''}" aria-pressed="${scope === 'tonight'}">Tonight${nTonight ? ` <b>${nTonight}</b>` : ''}</button>
+        <button type="button" data-scope="upcoming" class="${scope === 'upcoming' ? 'on' : ''}" aria-pressed="${scope === 'upcoming'}">Upcoming${nUpcoming ? ` <b>${nUpcoming}</b>` : ''}</button>
+      </div>
+      <div class="seg seg-icons" role="group" aria-label="View">
+        <a href="#/night" class="${mode === 'list' ? 'on' : ''}" aria-label="List" ${mode === 'list' ? 'aria-current="page"' : ''}>${icon.list}</a>
+        <a href="#/night/map" class="${mode === 'map' ? 'on' : ''}" aria-label="Map" ${mode === 'map' ? 'aria-current="page"' : ''}>${icon.pin}</a>
+      </div>
     </div>`;
-  const sw = windowSwitch(app, rerender);
-  sw.querySelectorAll<HTMLElement>('.win').forEach((b, i) => {
-    b.querySelector('.win-date')!.insertAdjacentHTML('beforeend', counts[i] ? ` · ${icon.heartFill}${counts[i]}` : '');
-  });
-  root.append(sw);
-
-  const tabs = document.createElement('div');
-  tabs.className = 'tabs';
-  tabs.innerHTML = `<a href="#/night" class="tab ${mode === 'list' ? 'on' : ''}" ${mode === 'list' ? 'aria-current="page"' : ''}>${icon.list} List</a>
-    <a href="#/night/map" class="tab ${mode === 'map' ? 'on' : ''}" ${mode === 'map' ? 'aria-current="page"' : ''}>${icon.pin} Map</a>`;
-  root.append(tabs);
+  root.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach((b) =>
+    b.addEventListener('click', () => {
+      scope = b.dataset.scope as Scope;
+      rerender();
+    }),
+  );
 
   if (!rows.length) {
+    const later = scope === 'tonight' && nUpcoming;
     root.insertAdjacentHTML(
       'beforeend',
-      `<div class="empty"><h2 class="display">Nothing saved yet.</h2><p>Swipe right on a poster (or press Save) and it lands here, sorted by start time.</p><a class="btn" href="#/">Go to the deck</a></div>`,
+      `<div class="empty"><h2 class="display">${scope === 'tonight' ? 'Nothing for tonight yet.' : 'Nothing saved yet.'}</h2>
+        <p>Swipe right on a poster to save it here. Swipe up to make it a favorite.</p>
+        <div class="row">${later ? `<button type="button" class="btn btn-ghost" data-act="later">See ${nUpcoming} upcoming</button>` : ''}<a class="btn" href="#/">Go to the deck</a></div></div>`,
     );
+    root.querySelector('[data-act=later]')?.addEventListener('click', () => {
+      scope = 'upcoming';
+      rerender();
+    });
     return;
   }
 
@@ -69,17 +92,13 @@ export function renderNight(app: App, root: HTMLElement, mode: 'list' | 'map', r
   list.className = 'night-list';
   let lastNight = '';
   for (const r of rows) {
-    if (w.nights.length > 1 && r.saved.night !== lastNight) {
+    if (scope === 'upcoming' && r.saved.night !== lastNight) {
       lastNight = r.saved.night;
-      list.insertAdjacentHTML('beforeend', `<h2 class="group">${esc(dayLabel(lastNight))}</h2>`);
+      list.insertAdjacentHTML('beforeend', `<h2 class="group">${r.saved.night === app.tonight ? 'Tonight' : esc(dayLabel(lastNight))}</h2>`);
     }
     list.append(rowEl(app, r, rerender));
   }
   root.append(list);
-  root.insertAdjacentHTML(
-    'beforeend',
-    `<p class="note">Saved on this device only — no account needed. Saves leave this list after the night ends at 05:00.</p>`,
-  );
 }
 
 function rowEl(app: App, r: Row, rerender: () => void): HTMLElement {
@@ -88,17 +107,16 @@ function rowEl(app: App, r: Row, rerender: () => void): HTMLElement {
   const color = e ? familyColor(e, saved.snap.family) : '#CFC7B2';
   const dead = st.some((s) => s.kind === 'ended' || s.kind === 'canceled' || s.kind === 'removed');
   const el = document.createElement('div');
-  el.className = `night-row ${dead ? 'is-dead' : ''}`;
+  el.className = `night-row ${dead ? 'is-dead' : ''} ${saved.fav ? 'is-fav' : ''}`;
   const title = e ? posterTitle(e) : saved.snap.title;
   el.innerHTML = `
     <a class="nr-main" href="#/event/${encodeURIComponent(saved.id)}">
-      <span class="nr-time" style="background:${color};color:${inkOn(color)}">${r.start ? clock(r.start) : '—'}</span>
+      <span class="nr-time" style="background:${color};color:${inkOn(color)}">${r.start ? clock(r.start) : '—'}${saved.fav ? `<span class="nr-fav">${star('currentColor', '1em')}</span>` : ''}</span>
       <span class="nr-body">
         <span class="nr-title">${esc(title)}</span>
-        <span class="nr-meta">${esc(e?.venue?.district ?? saved.snap.place)} · ${esc(e ? priceText(e.price) : saved.snap.price)}${e?.venue?.name ? ` · ${esc(e.venue.name)}` : ''}</span>
+        <span class="nr-meta">${esc(e?.venue?.name ?? saved.snap.venue ?? saved.snap.place)} · ${esc(e ? priceText(e.price) : saved.snap.price)}</span>
         ${st.length ? `<span class="badges">${badges(st)}</span>` : ''}
       </span>
-      <span class="nr-go" aria-hidden="true">${icon.out}</span>
     </a>
     <button type="button" class="nr-remove" aria-label="Remove ${esc(title)} from My Night">${icon.x}</button>`;
   el.querySelector('.nr-main')!.addEventListener('click', () => app.inAppNavs++);
@@ -135,11 +153,10 @@ function mapView(app: App, rows: Row[]): HTMLElement {
       .join('')}</ol>
     ${
       unpinned.length
-        ? `<div class="unmapped"><h2 class="group">Not on the map</h2><p class="note">These don’t have a verified location, so we don’t place a pin. Check the listing.</p>
+        ? `<div class="unmapped"><h2 class="group">Not on the map</h2>
           ${unpinned.map((r) => `<a href="#/event/${encodeURIComponent(r.saved.id)}">${r.start ? clock(r.start) : ''} · ${esc(r.e ? posterTitle(r.e) : r.saved.snap.title)} — ${esc(r.e?.venue?.name ?? r.saved.snap.place)} ${icon.out}</a>`).join('')}</div>`
         : ''
-    }
-    <p class="note">Schematic map. Pins only for saved events with verified coordinates.</p>`;
+    }`;
 
   const card = wrap.querySelector<HTMLElement>('.map-card')!;
   const select = (i: number) => {

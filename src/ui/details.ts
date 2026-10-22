@@ -3,7 +3,7 @@ import { CATEGORY_LABEL, esc, priceText } from '../core/format';
 import { store } from '../core/store';
 import { clock, dayLabel, weekdayShort } from '../core/time';
 import { fitDom } from '../posters/fit';
-import { renderPoster } from '../posters/render';
+import { renderPoster, star } from '../posters/render';
 import { badges, icon, statusOf, toast } from './common';
 
 function back(app: App) {
@@ -70,6 +70,7 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
     <div class="det-poster ${e.canceled ? 'is-canceled' : ''}">${renderPoster(e, fam).html}${e.canceled ? '<div class="cancel-band">CANCELED</div>' : ''}</div>
     ${status.length ? `<div class="badges">${badges(status)}</div>` : ''}
     <h1 class="ev-title" tabindex="-1">${esc(e.title)}</h1>
+    ${e.blurb ? `<p class="lead">${esc(e.blurb)}</p>` : ''}
     <dl class="facts">
       <div><dt>When</dt><dd>${when}${!e.end && e.start ? '<small>End time not published</small>' : ''}</dd></div>
       <div><dt>Where</dt><dd>${e.venue ? `${e.venue.district ? `<b>${esc(e.venue.district)}</b> · ` : ''}${esc(e.venue.name)}${e.venue.address ? `<small>${esc(e.venue.address)}${mapsQuery ? ` · <a href="${mapsQuery}" target="_blank" rel="noopener">Map ${icon.out}</a>` : ''}</small>` : ''}` : 'Location TBC'}</dd></div>
@@ -77,10 +78,13 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
       <div><dt>Type</dt><dd>${esc(CATEGORY_LABEL[e.category])}${e.genre ? ` · ${esc(e.genre)}` : ''}</dd></div>
       ${e.language ? `<div><dt>Language</dt><dd>${esc(e.language)}</dd></div>` : ''}
     </dl>
-    ${e.description ? `<p class="desc">${esc(e.description)}</p><p class="note">From the ${esc(primary.name.toLowerCase())}.</p>` : ''}
+    ${e.description ? `<p class="desc">${esc(e.description)}</p>` : ''}
     ${e.displayTitle && e.displayTitle !== e.title ? `<p class="note">Poster headline “${esc(e.displayTitle)}” is our short version of the official title above.</p>` : ''}
     <a class="btn btn-wide" href="${esc(primary.url)}" target="_blank" rel="noopener">Open original event ${icon.out}</a>
-    <button type="button" class="btn ${isSaved ? 'btn-ghost' : 'btn-save'} btn-wide" data-act="save" aria-pressed="${isSaved}">${isSaved ? `${icon.heartFill} Saved — remove` : `${icon.heart} Save to My Night`}</button>
+    <div class="save-row">
+      <button type="button" class="btn ${isSaved ? 'btn-ghost' : 'btn-save'}" data-act="save" aria-pressed="${isSaved}">${isSaved ? `${icon.heartFill} Saved — remove` : `${icon.heart} Save to My Night`}</button>
+      <button type="button" class="btn btn-fav ${saved?.fav ? 'on' : ''}" data-act="fav" aria-pressed="${!!saved?.fav}" aria-label="Favorite">${star('currentColor', '1.1em')}</button>
+    </div>
     <p class="source">Source: <a href="${esc(primary.url)}" target="_blank" rel="noopener">${esc(primary.name)}</a>${others.length ? ` · also listed by ${others.map((o) => `<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.name)}</a>`).join(', ')}` : ''} · updated ${esc(dayLabel(e.updatedAt.slice(0, 10)).toLowerCase())} ${clock(e.updatedAt)}</p>`;
 
   sec.querySelector('[data-act=save]')!.addEventListener('click', () => {
@@ -89,11 +93,17 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
       toast('Removed from My Night', { label: 'Undo', run: () => (item && app.restore(item), rerender()) });
     } else {
       if (e.canceled) return toast('This event was canceled');
-      store.save(e, fam, app.now);
-      const w = app.windowOfNight(e.night!);
-      if (w) store.decide(app.windowKey(w), e.id, 'save');
+      app.save(e);
       toast('Saved to My Night');
     }
+    rerender();
+  });
+  sec.querySelector('[data-act=fav]')!.addEventListener('click', () => {
+    if (e.canceled) return toast('This event was canceled');
+    if (!saved) {
+      app.save(e, true);
+      toast('Saved as a favorite');
+    } else store.setFav(id, !saved.fav);
     rerender();
   });
 

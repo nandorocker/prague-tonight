@@ -1,7 +1,7 @@
 /**
  * Device-local persistence. No account in V1: saves live in this browser only.
  */
-import type { DateKey, FamilyId, Mood, PragueEvent, WallTime } from '../types';
+import type { DateKey, FamilyId, Mood, PragueEvent, Span, WallTime } from '../types';
 import type { Overrides } from './curate';
 import { placeText, priceText } from './format';
 
@@ -21,6 +21,8 @@ export interface SavedItem {
   id: string;
   night: DateKey;
   savedAt: WallTime;
+  /** Super-liked: saved and marked as a favorite. */
+  fav?: boolean;
   /** What the visitor saw when saving; used to flag later changes. */
   snap: SavedSnapshot;
 }
@@ -98,9 +100,21 @@ export const store = {
   isSaved(id: string): boolean {
     return this.saves().some((s) => s.id === id);
   },
-  save(e: PragueEvent, family: FamilyId, now: WallTime) {
-    if (!e.night || this.isSaved(e.id)) return;
-    write('pt:saves', [...this.saves(), { id: e.id, night: e.night, savedAt: now, snap: snapshot(e, family) }]);
+  save(e: PragueEvent, family: FamilyId, now: WallTime, fav = false) {
+    if (!e.night) return;
+    const all = this.saves();
+    const existing = all.find((s) => s.id === e.id);
+    if (existing) {
+      if (fav && !existing.fav) this.setFav(e.id, true);
+      return;
+    }
+    write('pt:saves', [...all, { id: e.id, night: e.night, savedAt: now, fav: fav || undefined, snap: snapshot(e, family) }]);
+  },
+  setFav(id: string, fav: boolean) {
+    write(
+      'pt:saves',
+      this.saves().map((s) => (s.id === id ? { ...s, fav: fav || undefined } : s)),
+    );
   },
   unsave(id: string): SavedItem | undefined {
     const all = this.saves();
@@ -112,20 +126,29 @@ export const store = {
     if (!this.isSaved(item.id)) write('pt:saves', [...this.saves(), item]);
   },
 
-  /** Swipe decisions per time window; a pass never hides an event elsewhere. */
-  decisions(windowKey: string): Record<string, 'save' | 'pass'> {
-    return read(`pt:deck:${windowKey}`, {});
+  /** Swipe decisions by event id. Event ids include the night, so one map serves every range. */
+  decisions(): Record<string, 'save' | 'pass'> {
+    return read('pt:deck', {});
   },
-  decide(windowKey: string, id: string, d: 'save' | 'pass' | null) {
-    const all = this.decisions(windowKey);
+  decide(id: string, d: 'save' | 'pass' | null) {
+    const all = this.decisions();
     if (d) all[id] = d;
     else delete all[id];
-    write(`pt:deck:${windowKey}`, all);
+    write('pt:deck', all);
   },
-  clearPasses(windowKey: string) {
-    const all = this.decisions(windowKey);
-    for (const k of Object.keys(all)) if (all[k] === 'pass') delete all[k];
-    write(`pt:deck:${windowKey}`, all);
+  /** Forget passes, for the given ids or for every event. */
+  clearPasses(ids?: string[]) {
+    const all = this.decisions();
+    for (const k of ids ?? Object.keys(all)) if (all[k] === 'pass') delete all[k];
+    write('pt:deck', all);
+  },
+
+  span(): Span {
+    const v = Number(ls.get('pt:span'));
+    return v === 3 || v === 7 ? v : 1;
+  },
+  setSpan(s: Span) {
+    ls.set('pt:span', String(s));
   },
 
   filters(): Filters {
@@ -133,13 +156,6 @@ export const store = {
   },
   setFilters(f: Filters) {
     write('pt:filters', f);
-  },
-
-  hintSeen(): boolean {
-    return ls.get('pt:hint') === '1';
-  },
-  markHintSeen() {
-    ls.set('pt:hint', '1');
   },
 
   overrides(): Overrides {
@@ -155,5 +171,20 @@ export const store = {
   setRevision(r: Revision | null) {
     if (r) write('pt:rev', r);
     else ls.del('pt:rev');
+  },
+
+  clearSaves() {
+    ls.del('pt:saves');
+    // Saved cards were decided as saves; forget those too so they can return.
+    write('pt:deck', Object.fromEntries(Object.entries(this.decisions()).filter(([, d]) => d !== 'save')));
+  },
+  /** Back to first launch: every pt: key, including editor overrides. */
+  clearAll() {
+    try {
+      for (const k of Object.keys(localStorage)) if (k.startsWith('pt:')) localStorage.removeItem(k);
+    } catch {
+      /* storage unavailable */
+    }
+    mem.clear();
   },
 };

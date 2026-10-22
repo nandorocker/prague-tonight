@@ -71,6 +71,7 @@ function merge(group: SourceRecord[]): PragueEvent {
     genre: best.genre,
     language: recs.find((r) => r.language?.verified)?.language?.value,
     description: recs.find((r) => r.description)?.description,
+    blurb: recs.find((r) => r.blurb)?.blurb,
     // First-party status wins. With only aggregators, a reported
     // cancellation still hides the event: wrongly promising it is worse.
     canceled: (firstParty.length ? firstParty : recs).some((r) => r.status === 'canceled'),

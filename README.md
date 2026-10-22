@@ -13,19 +13,21 @@ pnpm build        # typecheck + production build
 
 ## What's in it
 
-- **Deck**: one poster at a time. Swipe right or press Save to keep it; swipe left or press Pass to move on; tap for details. You can undo, use ← / → / Enter / U on a keyboard, and review your passes at the end of the deck.
-- **Time switch**: Tonight + Tomorrow. On Friday it becomes Tonight + Weekend (Sat + Sun). A night runs until 05:00, so 02:00 Saturday still counts as Friday night.
-- **Event details**: the official title, time, venue, price ("Check price" when it isn't confirmed), verified language, a short description from the source when it exists, and the original listing.
-- **My Night**: saves for both windows, in time order, with live status: starts soon, on now, ended, canceled, time or price changed since you saved. The schematic map pins only events with verified coordinates. Saves live in this browser (localStorage) only.
-- **All events**: the full eligible index behind the deck, with the same filters.
-- **Filters**: price, mood and neighborhood. A price filter says how many events it hides because their price is unknown.
-- **Review board** (`#/ops`, the PT mark in the header): candidate counts, the deck in swipe order, pin / remove / restyle, the reason each excluded event was left out, a style lab that renders one event in all eight families, and a simulated source refresh that cancels and moves saved events.
+- **Deck**: one full-size poster at a time, nothing else on screen. Swipe right (or ♥) to save, left (or ✕) to pass, up (or ★) to save as a favorite. Each swipe slams a big word on the card (GROOVY, NAH, OBSESSED…). Undo sits left of ✕. Tap the card for details. Keys: ← → ↑, Enter, U.
+- **Poster info band**: every poster has the same facts in the same place at the bottom: date and time, venue and price, a two-to-three-line blurb. The art above is free; the band takes each family's colours and type.
+- **Settings** (the pill top right): a Tonight / 3 days / 7 days slider, kind of event, price, area, plus "Start over" (bring back passed cards) and All events as a list. A night runs until 05:00.
+- **Event details**: title, blurb, time, venue, price, language, description, original listing, save and favorite.
+- **My Night**: Tonight or Upcoming, as a list or a schematic map. Favorites are starred. Live status: starts soon, on now, ended, canceled, changed since you saved. Saves live in this browser (localStorage).
+- **All events**: the full eligible list behind the deck, with the same settings.
+- **Tools** (hold the wordmark for a second, or open `#/ops`): resets (passes, My Night, everything), a clock you can pin to any moment, simulated cancellations and time changes, the deck in swipe order with per-card style / pin / remove, why events were left out, and a poster lab showing one event in every style.
+
+The viewport is locked: the page never scrolls or rubber-bands. Only content areas (lists, details, sheets) scroll inside the fixed shell.
 
 ## How it's built
 
 Vite + vanilla TypeScript, no UI framework. Self-hosted Fira Sans, Fira Sans Extra Condensed and Instrument Serif, all with Czech diacritics. No network or AI calls at runtime.
 
-- `src/data/fixtures.ts`: fictional source feed laid onto the real current dates. It includes the ugly cases from the QA list: a 120-character title, missing prices, cross-source duplicates, a cancellation, a 23:30–03:30 club night, missing coordinates, a dead source link, and 20 near-identical DJ listings.
+- `src/data/fixtures.ts`: fictional source feed laid onto the real current dates, with a short blurb for every event. It includes the ugly cases from the QA list: a 120-character title, missing prices, cross-source duplicates, a cancellation, a 23:30–03:30 club night, missing coordinates, a dead source link, and 20 near-identical DJ listings.
 - `src/core/normalize.ts`: dedupe across sources and choose the best attribution. Only first-party sources can set a price, and non-http links are rejected.
 - `src/core/curate.ts`: eligibility (for the list and for the deck), human-readable scoring, a greedy diversity pass with category and venue caps, and a deck of 20–35 cards when there are enough events.
 - `src/posters/`: eight design grammars (Acid Flyer, Editorial, Swiss Grid, Geometric, After Hours, Type Wall, Quiet Signal, Street Collage) plus a plain fallback.
@@ -35,8 +37,8 @@ Vite + vanilla TypeScript, no UI framework. Self-hosted Fira Sans, Fira Sans Ext
 
 ## Testing hooks
 
-- `?now=2026-10-23T23:30` pins the Prague clock (it still ticks). Use it to try Friday's weekend window or after-midnight behaviour.
-- `?stale=1` shows the warning for data that failed to refresh.
+- `?now=2026-10-23T23:30` pins the Prague clock (it still ticks). The Tools screen sets this for you.
+- `?stale=1` shows the warning for data that failed to refresh (also a Tools checkbox).
 - `node tools/screenshot.mjs --url '…' --steps '<js>;;SHOT:shots/a.png;;<js>'` drives headless Chrome at phone size.
 
 ## Not built yet (per the brief's "explore after launch")

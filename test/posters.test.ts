@@ -14,8 +14,11 @@ describe('poster engine', () => {
     for (const [i, r] of htmls.entries()) {
       expect(r.family).toBe(FAMILIES[i]);
       expect(r.html).toContain('19:00');
-      expect(r.html).toContain('ŽIŽKOV');
+      expect(r.html).toContain('THU 22 OCT · 19:00');
+      expect(r.html).toContain('Komunitní dílna Kotel');
+      expect(r.html).toContain('Žižkov');
       expect(r.html).toContain('FREE');
+      expect(r.html).toContain(draw.blurb!);
     }
     expect(new Set(htmls.map((h) => h.html.replace(/[hgdn][0-9a-z]+"/g, ''))).size).toBe(8);
   });

@@ -2,23 +2,22 @@
  * App state shared by every view. Deliberately small: the source of truth for
  * events is the loaded feed; the source of truth for the visitor is the store.
  */
-import type { FamilyId, PragueEvent, WallTime, WindowDef } from './types';
+import type { FamilyId, PragueEvent, Span, WallTime, WindowDef } from './types';
 import { curate, type Curation } from './core/curate';
 import { loadEvents } from './core/data';
 import { store, type Filters, type SavedItem } from './core/store';
-import { fromWallMinutes, nightOf, toPragueWall, wallMinutes, windowsFor } from './core/time';
+import { fromWallMinutes, nightOf, toPragueWall, wallMinutes, windowFor } from './core/time';
 import { familyFor } from './posters/assign';
 
-export type WindowId = WindowDef['id'];
+export type Swipe = 'save' | 'super' | 'pass';
 
 interface UndoEntry {
-  windowKey: string;
   id: string;
-  action: 'save' | 'pass';
+  action: Swipe;
 }
 
 const params = new URLSearchParams(location.search);
-/** ?now=2026-10-23T18:45 pins the clock to a Prague wall time, for testing. */
+/** ?now=2026-10-23T18:45 pins the clock to a Prague wall time. */
 const fixedNow = params.get('now');
 const startedAt = Date.now();
 
@@ -32,11 +31,10 @@ function readNow(): WallTime {
 
 export class App {
   now: WallTime = readNow();
-  windows!: [WindowDef, WindowDef];
-  win: WindowId = 'tonight';
+  span: Span = store.span();
   events: PragueEvent[] = [];
   byId = new Map<string, PragueEvent>();
-  private curations = new Map<WindowId, Curation>();
+  private curations = new Map<Span, Curation>();
   filters: Filters = store.filters();
   undo: UndoEntry[] = [];
   /** ?stale=1 simulates a failed refresh. */
@@ -54,7 +52,6 @@ export class App {
 
   load() {
     if (!this.simulatedStale) this.fetchedAt = this.now;
-    this.windows = windowsFor(this.now);
     this.events = loadEvents(this.now, store.revision());
     this.byId = new Map(this.events.map((e) => [e.id, e]));
     this.curations.clear();
@@ -71,31 +68,45 @@ export class App {
     return before !== this.now;
   }
 
-  get window(): WindowDef {
-    return this.windows.find((w) => w.id === this.win)!;
+  get tonight(): string {
+    return nightOf(this.now);
   }
 
-  curation(id: WindowId = this.win): Curation {
-    let c = this.curations.get(id);
+  get window(): WindowDef {
+    return windowFor(this.now, this.span);
+  }
+
+  setSpan(span: Span) {
+    this.span = span;
+    store.setSpan(span);
+  }
+
+  curation(span: Span = this.span): Curation {
+    let c = this.curations.get(span);
     if (!c) {
-      c = curate(this.events, this.windows.find((w) => w.id === id)!, this.now, store.overrides());
-      this.curations.set(id, c);
+      c = curate(this.events, windowFor(this.now, span), this.now, store.overrides());
+      this.curations.set(span, c);
     }
     return c;
+  }
+
+  save(e: PragueEvent, fav = false) {
+    store.save(e, this.familyOf(e), this.now, fav);
+    store.decide(e.id, 'save');
   }
 
   /** Unsave everywhere: the deck forgets the swipe so the card can return. */
   unsave(id: string) {
     const item = store.unsave(id);
-    const w = item && this.windowOfNight(item.night);
-    if (w) store.decide(this.windowKey(w), id, null);
+    store.decide(id, null);
+    this.undo = this.undo.filter((u) => u.id !== id);
     return item;
   }
 
   restore(item: SavedItem) {
+    this.undo = this.undo.filter((u) => u.id !== item.id);
     store.restore(item);
-    const w = this.windowOfNight(item.night);
-    if (w) store.decide(this.windowKey(w), item.id, 'save');
+    store.decide(item.id, 'save');
   }
 
   /** Recompute decks after an editor override or a simulated refresh. */
@@ -104,22 +115,10 @@ export class App {
     else this.curations.clear();
   }
 
-  windowKey(id: WindowId = this.win): string {
-    return this.windows.find((w) => w.id === id)!.nights.join('+');
-  }
-
   familyOf(e: PragueEvent): FamilyId {
-    for (const w of this.windows) {
-      if (e.night && w.nights.includes(e.night)) {
-        const f = this.curation(w.id).family.get(e.id);
-        if (f) return f;
-      }
-    }
-    return store.overrides().family[e.id] ?? familyFor(e);
-  }
-
-  windowOfNight(night: string): WindowId | null {
-    return this.windows.find((w) => w.nights.includes(night))?.id ?? null;
+    const saved = store.saves().find((s) => s.id === e.id);
+    if (saved) return saved.snap.family;
+    return this.curation().family.get(e.id) ?? store.overrides().family[e.id] ?? familyFor(e);
   }
 
   isStale(): boolean {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildFixtures } from '../src/data/fixtures';
 import { normalize, sameTitle } from '../src/core/normalize';
 import { curate, stillDeckable } from '../src/core/curate';
-import { minutesBetween, windowsFor } from '../src/core/time';
+import { minutesBetween, windowFor } from '../src/core/time';
 import type { SourceRecord } from '../src/types';
 
 const base = buildFixtures('2026-10-22');
@@ -41,7 +41,7 @@ describe('time', () => {
 
   it('drops events from the deck as they go stale while the app stays open', () => {
     const evs = normalize(base);
-    const c = curate(evs, windowsFor('2026-10-22T18:45')[0], '2026-10-22T18:45');
+    const c = curate(evs, windowFor('2026-10-22T18:45', 1), '2026-10-22T18:45');
     const later = '2026-10-22T23:00';
     const harp = c.deck.find((e) => e.title === 'Harp & Tape Loops')!;
     expect(stillDeckable(harp, '2026-10-22T18:45')).toBe(true);
