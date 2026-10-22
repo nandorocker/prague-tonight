@@ -1,0 +1,26 @@
+{
+  "name": "prague-tonight",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Prague Tonight - a phone-first deck of procedurally designed event posters.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "shot": "node tools/screenshot.mjs"
+  },
+  "devDependencies": {
+    "puppeteer": "^23.11.1",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@fontsource/fira-sans": "^5.3.0",
+    "@fontsource/fira-sans-extra-condensed": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0"
+  }
+}
