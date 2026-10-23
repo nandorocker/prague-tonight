@@ -3,6 +3,112 @@ import test from 'node:test';
 import puppeteer from 'puppeteer';
 import { createServer } from 'vite';
 
+test('initial loading skeleton', { timeout: 30_000 }, async (t) => {
+  const server = await createServer({ server: { host: '127.0.0.1', port: 0 } });
+  let browser;
+  try {
+    await server.listen();
+    const url = `http://127.0.0.1:${server.httpServer.address().port}/?demo=1&now=2026-10-23T18:45`;
+    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+
+    await t.test('paints the critical skeleton while the stylesheet is still loading', async () => {
+      const page = await browser.newPage();
+      await page.setViewport({ width: 390, height: 844 });
+      await page.setRequestInterception(true);
+      let release;
+      page.on('request', (request) => {
+        if (new URL(request.url()).pathname === '/src/styles.css') release = () => request.continue();
+        else void request.continue();
+      });
+      const navigation = page.goto(url, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#boot-skeleton', { visible: true });
+      await page.waitForFunction(() => performance.getEntriesByName('first-paint').length > 0);
+      assert.equal(await page.$eval('.sk-poster', (poster) => getComputedStyle(poster).backgroundColor), 'rgb(233, 225, 203)');
+      // The JS failsafe must not hide the skeleton before CSS has even loaded.
+      await new Promise((resolve) => setTimeout(resolve, 4100));
+      assert.equal(await page.$eval('#boot-skeleton', (skeleton) => getComputedStyle(skeleton).display), 'flex');
+      await release();
+      await navigation;
+      await page.waitForFunction(() => !document.documentElement.classList.contains('booting'));
+      assert.ok(await page.$('.card.top'));
+      await page.close();
+    });
+
+    await t.test('shows a responsive skeleton before JavaScript and unlocks the ready app', async () => {
+      const page = await browser.newPage();
+      await page.setRequestInterception(true);
+      let release;
+      page.on('request', (request) => {
+        if (new URL(request.url()).pathname === '/src/main.ts') release = () => request.continue();
+        else void request.continue();
+      });
+      const navigation = page.goto(url, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#boot-skeleton', { visible: true });
+      assert.equal(await page.$eval('#shell', (shell) => shell.inert && shell.getAttribute('aria-hidden') === 'true' && shell.getAttribute('aria-busy') === 'true'), true);
+      assert.equal(await page.$eval('#boot-skeleton', (skeleton) => skeleton.getAttribute('role')), 'status');
+      for (const [width, height] of [[390, 844], [320, 568], [1440, 900], [844, 390]]) {
+        await page.setViewport({ width, height });
+        const layout = await page.evaluate(() => {
+          const skeleton = document.querySelector('#boot-skeleton').getBoundingClientRect();
+          const poster = document.querySelector('.sk-poster').getBoundingClientRect();
+          const controls = document.querySelector('.sk-controls').getBoundingClientRect();
+          const nav = document.querySelector('.sk-nav').getBoundingClientRect();
+          return {
+            centered: Math.abs(skeleton.x - (innerWidth - skeleton.width) / 2) < 1,
+            width: skeleton.width,
+            fits: poster.width > 0 && poster.height > 0 && poster.top >= 0 && poster.bottom <= controls.top + 1 && controls.bottom <= nav.top + 1 && nav.bottom <= innerHeight + 1,
+          };
+        });
+        assert.deepEqual(layout, { centered: true, width: Math.min(480, width), fits: true });
+      }
+      await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+      assert.equal(await page.$eval('.sk-poster', (poster) => getComputedStyle(poster, '::after').animationName), 'none');
+      await release();
+      await navigation;
+      await page.waitForFunction(() => !document.documentElement.classList.contains('booting'));
+      assert.equal(await page.$eval('#boot-skeleton', (skeleton) => getComputedStyle(skeleton).display), 'none');
+      assert.equal(await page.$eval('#shell', (shell) => !shell.inert && !shell.hasAttribute('aria-hidden') && !shell.hasAttribute('aria-busy')), true);
+      assert.ok(await page.$('.card.top'));
+      await page.close();
+    });
+
+    await t.test('slow fonts do not keep the skeleton up indefinitely', async () => {
+      const page = await browser.newPage();
+      await page.setRequestInterception(true);
+      const fonts = [];
+      page.on('request', (request) => {
+        if (request.resourceType() === 'font') fonts.push(request);
+        else void request.continue();
+      });
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      assert.equal(await page.$eval('html', (html) => html.classList.contains('booting')), true);
+      await page.waitForFunction(() => !document.documentElement.classList.contains('booting'), { timeout: 3000 });
+      assert.ok(fonts.length > 0);
+      assert.equal(await page.$eval('#shell', (shell) => shell.inert), false);
+      await Promise.all(fonts.map((request) => request.abort()));
+      await page.close();
+    });
+
+    await t.test('the existing boot failsafe also clears the skeleton and inert state', async () => {
+      const page = await browser.newPage();
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (new URL(request.url()).pathname === '/src/main.ts') void request.abort();
+        else void request.continue();
+      });
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#boot-skeleton', { visible: true });
+      await page.waitForFunction(() => !document.documentElement.classList.contains('booting'), { timeout: 5000 });
+      assert.equal(await page.$eval('#boot-skeleton', (skeleton) => getComputedStyle(skeleton).display), 'none');
+      assert.equal(await page.$eval('#shell', (shell) => !shell.inert && !shell.hasAttribute('aria-hidden') && !shell.hasAttribute('aria-busy')), true);
+      await page.close();
+    });
+  } finally {
+    await browser?.close();
+    await server.close();
+  }
+});
+
 test('deck rendering and swipe interactions', { timeout: 60_000 }, async (t) => {
   const server = await createServer({ server: { host: '127.0.0.1', port: 0 } });
   let browser;

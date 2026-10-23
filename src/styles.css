@@ -35,9 +35,9 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Hold the shell back until the first view and its fonts are ready (see main.ts), so nothing pops in or swaps face. */
+/* The inline boot skeleton holds the layout until the first view and fonts are ready. */
 html.booting {
-  background: #f4eedd;
+  background: #dcd6c6;
 }
 
 html.booting #shell {
