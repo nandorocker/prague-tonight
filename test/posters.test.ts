@@ -251,7 +251,7 @@ describe('poster engine', () => {
   });
 
   it('balances the actual narrow-title pool while relaxing recency only when necessary', () => {
-    const input = deck(6).map((e) => ({ ...e, displayTitle: 'W'.repeat(21) }));
+    const input = deck(6).map((e) => ({ ...e, displayTitle: 'W'.repeat(19) }));
     const pool = eligibleFamilies(input[0]);
     expect(pool).toContain('culture');
     expect(pool).toContain('quiet');

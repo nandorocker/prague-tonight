@@ -34,10 +34,10 @@ const archive = (id: string, label: string, item: string, aspectRatio: number, f
 
 /** IDs are persisted in saved appearances: keep them stable as the library grows. */
 export const ARTWORK_ASSETS: readonly ArtworkAsset[] = [
-  archive('archive-horses', 'Prestashka of W. Winans — horses, c. 1910–1915', '2014689217', 1.37),
-  archive('archive-truck', 'U.S. Mail truck, c. 1910–1915', '2014694708', 1.36),
-  archive('archive-phonograph', 'First phonograph — an undated archival photograph', '2014702526', 1.39),
-  archive('archive-bain', 'G. G. Bain in his office, c. 1910–1915', '2014695048', 1.38, true),
+  archive('archive-horses', 'Prestashka of W. Winans — horses, c. 1910–1915', '2014689217', 1.42),
+  archive('archive-truck', 'U.S. Mail truck, c. 1910–1915', '2014694708', 1.55),
+  archive('archive-phonograph', 'First phonograph — an undated archival photograph', '2014702526', 1.49),
+  archive('archive-bain', 'G. G. Bain in his office, c. 1910–1915', '2014695048', 1.44, true),
   original('rotary-phone', 'object', 'A red rotary telephone', 1.4),
   original('lounge-chair', 'object', 'An implausibly elegant green chair'),
   original('sardine-tin', 'object', 'An open tin with one enormous sardine', 1.4),

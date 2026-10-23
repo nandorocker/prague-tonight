@@ -5,6 +5,7 @@
 .original .fx-serif { font-family: var(--serif); font-weight: 400; line-height: 1.04; letter-spacing: .01em; }
 .original .fx-boxes { line-height: .94; }
 .original .fx-boxes .ln { padding: .03em .14em; margin-bottom: .06em; }
+.original .fx-boxes .ln.dia { padding-top: .2em; }
 .original .fx-wall .ln { width: 100%; }
 .original .box-cream { background: #F4EEDD; color: #191919; }
 .original .box-ink { background: #191919; color: #F4EEDD; }
@@ -34,7 +35,7 @@
 .original .bl-big { font-size: 4.1cqw; }
 .original .bl-bold { font-weight: 600; }
 .original .bl-grid { font-size: 3cqw; }
-.original .bl-glow { font-size: 3cqw; }
+.original .bl-glow { font-size: 3cqw; padding: .6cqw 1.6cqw; margin-left: -1.6cqw; background: rgb(20 21 46 / .88); }
 /* Leave the source-copy zone intact; the old 104cqw band overlapped it. */
 .original .p-band { top: 114cqw; bottom: 2cqw; display: flex; flex-direction: column; gap: 1cqw; color: var(--b-fg); overflow: hidden; }
 .original .p-band.boxed { background: var(--b-bg); padding: 2.2cqw 3.4cqw; }

@@ -108,7 +108,7 @@ const T: Template[] = [
   { id: 'new-wave', title: 'Midnight Movie: Czech New Wave Double Bill', display: 'New Wave at Midnight', cat: 'film', genre: 'Double bill', venue: 'svetlo', days: [5, 6], start: '23:00', end: '02:30', price: 200, local: true, desc: 'Two features from the 1960s with a short break. Czech audio, English subtitles.', lang: ['CZ, EN subtitles', true] },
   { id: 'edge-docs', title: 'Documentaries from the Edge of the City', cat: 'film', genre: 'Documentary', venue: 'okno', days: [2, 0], start: '19:00', price: 0, local: true },
   { id: 'shorts', title: 'Short Film Night', cat: 'film', genre: 'Shorts', venue: 'loft', days: [4, 1], start: '20:00', price: 120 },
-  { id: 'animation-long', title: 'An Evening of Experimental Czech Animation from the 1960s and 1970s, with Live Improvised Piano Accompaniment and a Q&A', cat: 'film', genre: 'Animation', venue: 'svetlo', days: [2, 4, 0], start: '19:00', price: 160, oneOff: true, local: true },
+  { id: 'animation-long', title: 'An Evening of Experimental Czech Animation from the 1960s and 1970s, with Live Improvised Piano Accompaniment and a Q&A', display: 'Czech Animation, Live Piano', cat: 'film', genre: 'Animation', venue: 'svetlo', days: [2, 4, 0], start: '19:00', price: 160, oneOff: true, local: true },
   { id: 'student-docs', title: 'Prague Short Documentary Showcase: New Work from Students of the Film School, Followed by Director Conversations', display: 'Student Docs Showcase', cat: 'film', genre: 'Documentary', venue: 'sal', days: [3, 6], start: '18:30', price: 0, local: true },
 
   // Talks and spoken word
@@ -174,7 +174,7 @@ const BLURBS: Record<string, string> = {
   'three-bands': 'Three local alternative bands, thirty-five minutes each, in a small brick basement.',
   leftfield: 'Broken beats, odd tempos and live modular sets in the pavilion above Letná park.',
   'harp-tape': 'Solo harp run through reel-to-reel tape loops, performed in the library reading room.',
-  'brass-boat': 'A ten-piece brass band plays the deck of a moored river boat. Standing room, bar open.',
+  'brass-boat': 'A ten-piece brass band plays on the deck of a moored river boat. Standing room, bar open.',
   'folk-revival': 'Open session of Czech and Moravian folk tunes. Bring an instrument or just sit and listen.',
   'vinyl-club': 'Original pressings of Czech jazz from 1965 to 1975, played and introduced by a collector.',
   choir: 'Learn three songs by ear in an hour, then sing them together. No auditions, no experience.',
@@ -271,7 +271,7 @@ const BLURBS: Record<string, string> = {
   'Stand-up in Czech': 'Four Czech comedians, one host, in Czech.',
   'Ambient Lounge': 'Ambient and downtempo sets for sitting and listening. Beanbags provided.',
   'Late Jazz Session': 'A late jazz session with a rotating line-up of Prague players.',
-  'Synth Meetup': 'Bring a synth or come and play with others’. Show-and-tell and an open jam.',
+  'Synth Meetup': 'Bring a synth or come and play with others. Show-and-tell and an open jam.',
   'Electronic Live Acts': 'Three live electronic acts with hardware only, no laptops.',
   'Physical Theatre: Hold On': 'A physical theatre piece for three performers, wordless and about an hour long.',
   'Improv Jam': 'Open improv jam: anyone can jump on stage for a scene. Hosted by the house team.',

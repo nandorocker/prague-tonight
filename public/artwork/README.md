@@ -30,3 +30,5 @@ Each is a self-contained SVG with transparent surroundings and a descriptive tit
 ## Catalogue
 
 `src/posters/assets.ts` is the runtime catalogue. It records kind, photographic content, human-face prominence, transparency, aspect ratio, density, attribution, and source/rights information. Keep IDs stable: saved appearances refer to them. Add assets only with a recorded source or original-art attribution.
+
+The four `archive-*.webp` photographs are cropped inside the Library of Congress scan: the paper mat, the black negative edge and the handwritten caption were removed so only the picture shows. The crop does not alter the picture itself.

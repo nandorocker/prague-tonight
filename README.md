@@ -102,6 +102,7 @@ Event details label subjects as **illustrative artwork, not event photography**,
 - `?now=2026-10-23T23:30` pins the Prague clock (it still ticks). The Tools screen sets this for you.
 - `?stale=1` shows the warning for data that failed to refresh (also a Tools checkbox).
 - `node tools/screenshot.mjs --url '…' --steps '<js>;;SHOT:shots/a.png;;<js>'` drives headless Chrome at phone size.
+- `node tools/deck-audit.mjs [--span 1|3|7] [--fam acid,geo]` renders every card in a deck at real size into contact sheets under `shots/audit` and flags overlaps, overflow and truncated blurbs. `--matrix` instead renders every event in every poster family, with and without artwork, and prints a summary (no images).
 
 ## Not built yet (per the brief's "explore after launch")
 

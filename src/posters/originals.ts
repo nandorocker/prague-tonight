@@ -42,7 +42,7 @@ function star(): string {
 function title(text: string, box: Box, o: Partial<FitOptions> & { cls?: string; lineCls?: (i: number) => string; style?: string }): string | null {
   const fit = fitTitle(text, { w: box.w, h: box.h, charW: o.charW ?? .47, lineH: o.lineH ?? .98, max: o.max ?? 30, min: o.min ?? 8, maxLines: o.maxLines ?? 4 });
   if (!fit.ok) return null;
-  return `<div class="p-title ${o.cls ?? ''}" data-w="${box.w}" data-h="${box.h}" data-min="${o.min ?? 8}" style="left:${box.x}cqw;top:${box.y}cqw;width:${box.w}cqw;font-size:${fit.size}cqw;${o.style ?? ''}" aria-hidden="true">${fit.lines.map((l, i) => `<span class="ln ${o.lineCls?.(i) ?? ''}">${esc(l)}</span>`).join('')}</div>`;
+  return `<div class="p-title ${o.cls ?? ''}" data-w="${box.w}" data-h="${box.h}" data-min="${o.min ?? 8}" style="left:${box.x}cqw;top:${box.y}cqw;width:${box.w}cqw;font-size:${fit.size}cqw;${o.style ?? ''}" aria-hidden="true">${fit.lines.map((l, i) => `<span class="ln ${o.lineCls?.(i) ?? ''}${/[\u0300-\u036f]/.test(l.normalize('NFD')) ? ' dia' : ''}">${esc(l)}</span>`).join('')}</div>`;
 }
 function svg(body: string, defs = '') {
   return `<svg class="decor" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true"><defs>${defs}</defs>${body}</svg>`;
@@ -104,7 +104,7 @@ function swiss(c: Ctx): string | null {
   const art = svg(`<rect x="${f1(100 - cw)}" y="0" width="${f1(cw)}" height="18" fill="${accent}"/>${grid}${bar}${nums}`);
   const t = title(upper(c.title), { x: 2, y: 30, w: 95, h: 52 }, { cls: 'fx-cond', charW: .48, lineH: .98, max: 22, min: 8, maxLines: 5 });
   if (!t) return null;
-  return wrap(c, '--bg:#F7F4EC', `${art}<div class="p-brand swiss">PT—${f.dd}</div><div class="p-brand swiss-date" style="right:0;width:${f1(cw)}cqw;color:${K.cream}">${f.ddmm}</div><div class="p-label" style="left:2cqw;top:21cqw;color:${accent}">${esc(upper(f.kind))}</div>${t}${blurb(c, `left:2cqw;top:101cqw;width:64cqw;color:${K.ink}`, 'bl-grid', 2)}${band(c, { fg: K.ink, accent, font: 'cond', x: 2 })}`);
+  return wrap(c, '--bg:#F7F4EC', `${art}<div class="p-brand swiss">PT—${f.dd}</div><div class="p-brand swiss-date" style="right:0;width:${f1(cw)}cqw;color:${K.cream}">${f.ddmm}</div><div class="p-label" style="left:2cqw;top:21cqw;color:${accent}">${esc(upper(f.kind))}</div>${t}${blurb(c, `left:2cqw;top:101cqw;width:64cqw;color:${K.ink}`, 'bl-grid', 3)}${band(c, { fg: K.ink, accent, font: 'cond', x: 2 })}`);
 }
 function geo(c: Ctx): string | null {
   const { r, f } = c;

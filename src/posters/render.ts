@@ -19,14 +19,14 @@ interface Box { x: number; y: number; w: number; h: number }
 const IMAGE_LAYOUT: Record<IllustratedFamilyId, { title: Box; image: Box }> = {
   acid: { title: { x: 7, y: 20, w: 86, h: 30 }, image: { x: 15, y: 53, w: 70, h: 33 } },
   typewall: { title: { x: 9, y: 23, w: 81, h: 30 }, image: { x: 10, y: 56, w: 80, h: 27 } },
-  geo: { title: { x: 8, y: 23, w: 84, h: 29 }, image: { x: 20, y: 55, w: 60, h: 28 } },
+  geo: { title: { x: 8, y: 29, w: 84, h: 25 }, image: { x: 20, y: 55, w: 60, h: 28 } },
   quiet: { title: { x: 9, y: 64, w: 82, h: 28 }, image: { x: 16, y: 20, w: 68, h: 40 } },
   swiss: { title: { x: 5, y: 23, w: 90, h: 29 }, image: { x: 5, y: 54, w: 90, h: 26 } },
   afterhours: { title: { x: 12, y: 70, w: 76, h: 22 }, image: { x: 12, y: 34, w: 76, h: 33 } },
   editorial: { title: { x: 9, y: 57, w: 82, h: 34 }, image: { x: 26, y: 22, w: 48, h: 29 } },
   collage: { title: { x: 10, y: 64, w: 80, h: 20 }, image: { x: 14, y: 25, w: 72, h: 36 } },
-  culture: { title: { x: 7, y: 58, w: 86, h: 40 }, image: { x: 52, y: 17, w: 40, h: 35 } },
-  geometric: { title: { x: 7, y: 21, w: 86, h: 30 }, image: { x: 18, y: 68, w: 64, h: 34 } },
+  culture: { title: { x: 10, y: 58, w: 80, h: 40 }, image: { x: 52, y: 17, w: 40, h: 35 } },
+  geometric: { title: { x: 10, y: 21, w: 80, h: 30 }, image: { x: 18, y: 68, w: 64, h: 34 } },
 };
 function headline(c: Ctx, text: string, box: Box, o: Partial<FitOptions> & { cls?: string }): string | null {
   return title(text, c.artwork !== 'none' && c.family !== 'plain' ? IMAGE_LAYOUT[c.family].title : box, o);
@@ -72,16 +72,16 @@ function typewall(c: Ctx): string | null {
   const t = headline(c, upper(c.title), { x: 9, y: 23, w: 81, h: 60 }, { cls: 'fx-xerox', max: 23, min: 8, lineH: 1.12 });
   if (!t) return null;
   const offset = n(c.r.range(1, 4));
-  const art = svg(`<rect width="100" height="140" fill="#242424"/><path d="M5 19L95 18 91 30 97 35 93 49 96 63 91 79 95 101 92 120 96 137 4 140 7 121 3 104 7 84 3 70 7 53 3 39Z" fill="${K.paper}"/><path d="M0 12L100 7M0 15L100 10M0 139L100 136" stroke="${K.paper}" stroke-width=".6"/><rect x="8" y="17" width="22" height="6" fill="#C6C1AF" opacity=".85" transform="rotate(-12 8 19)"/><rect width="100" height="140" filter="url(#noise${c.uid})" opacity=".17"/><path d="M${offset} 24V134" stroke="#191919" stroke-dasharray="1 2"/>`, `<filter id="noise${c.uid}"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="${hash(`${c.e.id}:typewall`) % 997}"/><feColorMatrix type="saturate" values="0"/></filter>`);
+  const art = svg(`<rect width="100" height="140" fill="#242424"/><path d="M5 19L95 18 91 30 97 35 93 49 96 63 91 79 95 101 92 120 96 137 4 140 7 121 3 104 7 84 3 70 7 53 3 39Z" fill="${K.paper}"/><path d="M0 4L100 -1M0 7L100 2M0 139L100 136" stroke="${K.paper}" stroke-width=".6"/><rect x="8" y="17" width="22" height="6" fill="#C6C1AF" opacity=".85" transform="rotate(-12 8 19)"/><rect width="100" height="140" filter="url(#noise${c.uid})" opacity=".17"/><path d="M${offset} 24V134" stroke="#191919" stroke-dasharray="1 2"/>`, `<filter id="noise${c.uid}"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="${hash(`${c.e.id}:typewall`) % 997}"/><feColorMatrix type="saturate" values="0"/></filter>`);
   return wrap(c, 'typewall', `${art}${brand()}${t}`);
 }
 
 function geo(c: Ctx): string | null {
-  const t = headline(c, c.title, { x: 8, y: 32, w: 84, h: 52 }, { cls: 'fx-pop', charW: 0.63, max: 22, min: 7, lineH: 1.02 });
+  const t = headline(c, c.title, { x: 8, y: 34, w: 84, h: 50 }, { cls: 'fx-pop', charW: 0.63, max: 22, min: 7, lineH: 1.02 });
   if (!t) return null;
   const angle = c.r.int(-20, 20);
-  const petals = Array.from({ length: 6 }, (_, i) => `<ellipse cx="78" cy="13" rx="5" ry="10" fill="${K.pink}" transform="rotate(${i * 60 + angle} 78 24)"/>`).join('');
-  const art = svg(`<rect width="100" height="140" fill="url(#candy${c.uid})"/><rect x="4" y="4" width="92" height="132" rx="14" fill="none" stroke="#FFFFFF" stroke-width="1.2"/>${petals}<circle cx="78" cy="24" r="5" fill="#FFF0A5"/><path d="M11 89L14 97 23 98 16 104 17 113 10 108 2 112 4 103 -2 97 7 96Z" fill="${K.steel}" stroke="#FFF" stroke-width="1"/><path d="M9 23Q24 8 49 14" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round"/><ellipse cx="86" cy="130" rx="13" ry="9" fill="${K.pink}" stroke="#FFF"/>`, `<linearGradient id="candy${c.uid}" x2=".7" y2="1"><stop stop-color="#D9C6FA"/><stop offset=".5" stop-color="#F8CBE5"/><stop offset="1" stop-color="${K.steel}"/></linearGradient>`);
+  const petals = Array.from({ length: 6 }, (_, i) => `<ellipse cx="83" cy="6" rx="4.5" ry="8.5" fill="${K.pink}" transform="rotate(${i * 60 + angle} 83 15)"/>`).join('');
+  const art = svg(`<rect width="100" height="140" fill="url(#candy${c.uid})"/><rect x="4" y="4" width="92" height="132" rx="14" fill="none" stroke="#FFFFFF" stroke-width="1.2"/>${petals}<circle cx="83" cy="15" r="4.5" fill="#FFF0A5"/><path d="M11 89L14 97 23 98 16 104 17 113 10 108 2 112 4 103 -2 97 7 96Z" fill="${K.steel}" stroke="#FFF" stroke-width="1"/><path d="M9 23Q24 8 49 14" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round"/><ellipse cx="86" cy="130" rx="13" ry="9" fill="${K.pink}" stroke="#FFF"/>`, `<linearGradient id="candy${c.uid}" x2=".7" y2="1"><stop stop-color="#D9C6FA"/><stop offset=".5" stop-color="#F8CBE5"/><stop offset="1" stop-color="${K.steel}"/></linearGradient>`);
   return wrap(c, 'geo', `${art}${brand()}${t}`);
 }
 
@@ -89,7 +89,7 @@ function quiet(c: Ctx): string | null {
   const t = headline(c, c.title, { x: 9, y: 49, w: 82, h: 46 }, { cls: 'fx-soft', charW: 0.48, max: 19, min: 6, lineH: 1.04 });
   if (!t) return null;
   const shift = n(c.r.range(-5, 5));
-  const art = svg(`<rect width="100" height="140" fill="${K.paper}"/><g filter="url(#haze${c.uid})"><path d="M-15 63Q45 ${shift} 120 38V140H-15Z" fill="${K.sage}"/><ellipse cx="78" cy="30" rx="34" ry="25" fill="${K.steel}" opacity=".85"/><ellipse cx="18" cy="125" rx="65" ry="30" fill="#DED0C2"/></g><path d="M69 44Q65 26 76 16M70 35Q54 33 58 22Q70 22 70 35M71 29Q85 29 84 18Q73 19 71 29" fill="none" stroke="${K.plum}" stroke-opacity=".5" stroke-width=".6"/>`, `<filter id="haze${c.uid}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>`);
+  const art = svg(`<rect width="100" height="140" fill="${K.paper}"/><g filter="url(#haze${c.uid})"><path d="M-15 63Q45 ${shift} 120 38V140H-15Z" fill="${K.sage}"/><ellipse cx="78" cy="30" rx="34" ry="25" fill="${K.steel}" opacity=".85"/><ellipse cx="18" cy="125" rx="65" ry="30" fill="#DED0C2"/></g><path transform="translate(10 -2)" d="M69 44Q65 26 76 16M70 35Q54 33 58 22Q70 22 70 35M71 29Q85 29 84 18Q73 19 71 29" fill="none" stroke="${K.plum}" stroke-opacity=".5" stroke-width=".6"/>`, `<filter id="haze${c.uid}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>`);
   return wrap(c, 'quiet', `${art}${brand()}${t}`);
 }
 
@@ -114,7 +114,13 @@ function editorial(c: Ctx): string | null {
   const t = headline(c, c.title, { x: 9, y: 57, w: 82, h: 34 }, { cls: 'fx-fashion', charW: 0.52, max: 17, min: 6, lineH: 1.02 });
   if (!t) return null;
   const shift = n(c.r.range(0, 8));
-  const art = svg(`<rect width="100" height="140" fill="${K.paper}"/><path d="M9 16H91M9 136H91" stroke="${K.ink}" stroke-width=".4"/><rect x="26" y="22" width="48" height="29" fill="#D5CDCF" stroke="${K.ink}" stroke-width=".3"/><path d="M${shift} 53L53 22H65L40 53Z" fill="${K.plum}" clip-path="url(#frame${c.uid})"/><path d="M48 53L73 22H90L68 53Z" fill="${K.ink}" clip-path="url(#frame${c.uid})"/>`, `<clipPath id="frame${c.uid}"><rect x="26" y="22" width="48" height="29"/></clipPath>`);
+  // Three framed abstractions, so a run of editorial cards doesn't repeat one picture.
+  const motif = [
+    `<path d="M${shift} 53L53 22H65L40 53Z" fill="${K.plum}" clip-path="url(#frame${c.uid})"/><path d="M48 53L73 22H90L68 53Z" fill="${K.ink}" clip-path="url(#frame${c.uid})"/>`,
+    `<circle cx="${n(38 + Number(shift) / 2)}" cy="40" r="15" fill="${K.plum}" clip-path="url(#frame${c.uid})"/><rect x="55" y="22" width="19" height="29" fill="${K.ink}"/>`,
+    `<rect x="26" y="22" width="48" height="9" fill="${K.plum}"/><rect x="26" y="39" width="${n(30 + Number(shift) * 2)}" height="12" fill="${K.ink}"/>`,
+  ][c.r.int(0, 2)];
+  const art = svg(`<rect width="100" height="140" fill="${K.paper}"/><path d="M9 16H91M9 136H91" stroke="${K.ink}" stroke-width=".4"/><rect x="26" y="22" width="48" height="29" fill="#D5CDCF" stroke="${K.ink}" stroke-width=".3"/>${motif}`, `<clipPath id="frame${c.uid}"><rect x="26" y="22" width="48" height="29"/></clipPath>`);
   return wrap(c, 'editorial', `${art}${brand()}${t}`);
 }
 
@@ -127,7 +133,7 @@ function collage(c: Ctx): string | null {
 }
 
 function culture(c: Ctx): string | null {
-  const t = headline(c, c.title, { x: 7, y: 58, w: 86, h: 40 }, { cls: 'fx-culture', charW: 0.52, max: 20, min: 6, lineH: 1.02 });
+  const t = headline(c, c.title, { x: 10, y: 58, w: 80, h: 40 }, { cls: 'fx-culture', charW: 0.52, max: 20, min: 6, lineH: 1.02 });
   if (!t) return null;
   const accent = c.r.pick(['#A7352B', '#284C7B']);
   const cx = n(c.r.range(73, 84));
@@ -136,7 +142,7 @@ function culture(c: Ctx): string | null {
 }
 
 function geometric(c: Ctx): string | null {
-  const t = headline(c, upper(c.title), { x: 7, y: 21, w: 86, h: 38 }, { cls: 'fx-geometric', charW: 0.51, max: 22, min: 7, lineH: 1.01 });
+  const t = headline(c, upper(c.title), { x: 10, y: 21, w: 80, h: 38 }, { cls: 'fx-geometric', charW: 0.51, max: 22, min: 7, lineH: 1.01 });
   if (!t) return null;
   const offset = c.r.pick([0, 6, 12]);
   const art = svg(`<rect width="100" height="140" fill="#F0E9D7"/><path d="M0 66H100M7 0V140M93 0V140" stroke="#244D4D" stroke-width=".35"/><g transform="translate(${offset} 0)"><path d="M-14 140V87A27 27 0 0 1 40 87V140H25V87A12 12 0 0 0 1 87V140Z" fill="#B9502E"/><path d="M29 140V87A27 27 0 0 1 83 87V140H68V87A12 12 0 0 0 44 87V140Z" fill="#244D4D"/><rect x="78" y="66" width="15" height="74" fill="#B9502E"/></g><rect x="7" y="13" width="24" height="2" fill="#B9502E"/>`);
