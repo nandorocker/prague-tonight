@@ -152,6 +152,12 @@ route();
 // Reveal once the first view is laid out and its fonts are in: no unstyled
 // frame, no fallback-face flash. The cap keeps a slow font from blocking.
 requestAnimationFrame(() => {
-  const reveal = () => document.documentElement.classList.remove('booting');
+  const reveal = () => {
+    document.documentElement.classList.remove('booting');
+    const shell = document.getElementById('shell')!;
+    shell.inert = false;
+    shell.removeAttribute('aria-hidden');
+    shell.removeAttribute('aria-busy');
+  };
   void Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(reveal, reveal);
 });
