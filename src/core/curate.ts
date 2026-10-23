@@ -40,8 +40,13 @@ export function isEnded(e: PragueEvent, now: WallTime): boolean {
   return e.night ? isNightOver(e.night, now) : false;
 }
 
-export function hasStarted(e: PragueEvent, now: WallTime): boolean {
-  return !!e.start && minutesBetween(e.start, now) >= 0;
+export function minutesUntilStart(e: PragueEvent, now: WallTime, nowInstant?: number): number {
+  if (e.startInstant && nowInstant !== undefined) return Math.ceil((Date.parse(e.startInstant) - nowInstant) / 60000);
+  return e.start ? minutesBetween(now, e.start) : Infinity;
+}
+
+export function hasStarted(e: PragueEvent, now: WallTime, nowInstant?: number): boolean {
+  return !!e.start && minutesUntilStart(e, now, nowInstant) <= 0;
 }
 
 /** Why an event cannot appear anywhere for this window, if it can't. */
@@ -55,18 +60,18 @@ function listBlocker(e: PragueEvent, now: WallTime): string | null {
 }
 
 /** Why a listable event is not good enough for the deck, if it isn't. */
-function deckBlocker(e: PragueEvent, now: WallTime): string | null {
+function deckBlocker(e: PragueEvent, now: WallTime, nowInstant?: number): string | null {
   if (e.dateAmbiguous || !e.start) return 'Opening hours for this night not confirmed';
   if (e.confidence < MIN_DECK_CONFIDENCE) return 'Below deck confidence bar';
   if (!e.venue?.district) return 'Location not confirmed';
   // Long-running events (club nights) stay while there's real time left.
-  if (startedTooLongAgo(e, now)) return 'Started over an hour ago';
+  if (startedTooLongAgo(e, now, nowInstant)) return 'Started over an hour ago';
   return null;
 }
 
 /** Long-running events (club nights) stay while there's real time left. */
-function startedTooLongAgo(e: PragueEvent, now: WallTime): boolean {
-  if (!e.start || minutesBetween(e.start, now) <= 60) return false;
+function startedTooLongAgo(e: PragueEvent, now: WallTime, nowInstant?: number): boolean {
+  if (!e.start || -minutesUntilStart(e, now, nowInstant) <= 60) return false;
   return !e.end || minutesBetween(now, e.end) < 90;
 }
 
@@ -78,14 +83,14 @@ export function stillListable(e: PragueEvent, now: WallTime): boolean {
   return !e.canceled && !isEnded(e, now);
 }
 
-export function stillDeckable(e: PragueEvent, now: WallTime): boolean {
-  return stillListable(e, now) && !startedTooLongAgo(e, now);
+export function stillDeckable(e: PragueEvent, now: WallTime, nowInstant?: number): boolean {
+  return stillListable(e, now) && !startedTooLongAgo(e, now, nowInstant);
 }
 
 /** Human-readable signals, kept simple so they can be tuned by hand. */
-export function score(e: PragueEvent, now: WallTime): number {
+export function score(e: PragueEvent, now: WallTime, nowInstant?: number): number {
   let s = 0;
-  const until = minutesBetween(now, e.start!) / 60;
+  const until = minutesUntilStart(e, now, nowInstant) / 60;
   if (until < 0) s += 0.25;
   else if (until <= 24) s += 0.6 - Math.min(until, 8) * 0.03;
   else s += 0.45;
@@ -107,8 +112,8 @@ export function score(e: PragueEvent, now: WallTime): number {
  * penalties for repeating the category, venue or district of recent picks.
  * Hard caps stop any one category or venue flooding the deck.
  */
-export function diversify(candidates: PragueEvent[], now: WallTime, size: number, nights: number): PragueEvent[] {
-  const base = new Map(candidates.map((e) => [e.id, score(e, now)]));
+export function diversify(candidates: PragueEvent[], now: WallTime, size: number, nights: number, nowInstant?: number): PragueEvent[] {
+  const base = new Map(candidates.map((e) => [e.id, score(e, now, nowInstant)]));
   const catCap = Math.max(3, Math.ceil(size * 0.25));
   const venueCap = nights;
   const picked: PragueEvent[] = [];
@@ -121,15 +126,17 @@ export function diversify(candidates: PragueEvent[], now: WallTime, size: number
   const left = new Set(candidates);
 
   const value = (e: PragueEvent, strict: boolean): number => {
-    if (strict && (cat.get(e.category) ?? 0) >= catCap) return -Infinity;
+    if (strict && e.category !== 'other' && (cat.get(e.category) ?? 0) >= catCap) return -Infinity;
     if (strict && (venue.get(e.venue!.id) ?? 0) >= venueCap) return -Infinity;
     if (strict && series.has(seriesOf(e))) return -Infinity;
     let v = base.get(e.id)!;
     const last = picked.slice(-2);
-    if (last.at(-1)?.category === e.category) v -= 0.3;
-    else if (last.some((p) => p.category === e.category)) v -= 0.12;
+    if (e.category !== 'other') {
+      if (last.at(-1)?.category === e.category) v -= 0.3;
+      else if (last.some((p) => p.category === e.category)) v -= 0.12;
+    }
     v -= (district.get(e.venue!.district!) ?? 0) * 0.04;
-    v -= (cat.get(e.category) ?? 0) * 0.03;
+    if (e.category !== 'other') v -= (cat.get(e.category) ?? 0) * 0.03;
     return v;
   };
 
@@ -165,6 +172,7 @@ export function curate(
   window: WindowDef,
   now: WallTime,
   overrides: Overrides = NO_OVERRIDES,
+  nowInstant?: number,
 ): Curation {
   const inWindow = events.filter((e) => e.night && window.nights.includes(e.night));
   const excluded: Exclusion[] = [];
@@ -183,7 +191,7 @@ export function curate(
       excluded.push({ event: e, reason: 'Removed from deck by editor', listed: true });
       continue;
     }
-    const deckBlock = deckBlocker(e, now);
+    const deckBlock = deckBlocker(e, now, nowInstant);
     if (deckBlock) {
       excluded.push({ event: e, reason: deckBlock, listed: true });
       continue;
@@ -192,7 +200,7 @@ export function curate(
   }
 
   const size = deckSize(candidates.length + pinned.length, window.nights.length);
-  const picked = diversify(candidates, now, Math.max(0, size - pinned.length), window.nights.length);
+  const picked = diversify(candidates, now, Math.max(0, size - pinned.length), window.nights.length, nowInstant);
   const deck = [...pinned, ...picked];
   const chosen = new Set(deck.map((e) => e.id));
   for (const e of candidates) {

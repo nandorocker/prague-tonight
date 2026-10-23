@@ -126,7 +126,7 @@ export function openSettings(app: App, onApply: () => void) {
     const cur = app.curation(span);
     const decisions = store.decisions();
     const saved = new Set(store.saves().map((s) => s.id));
-    const live = applyFilters(cur.deck.filter((e) => stillDeckable(e, app.now)), f).items;
+    const live = applyFilters(cur.deck.filter((e) => stillDeckable(e, app.now, app.nowInstant)), f).items;
     const fresh = live.filter((e) => !decisions[e.id] && !saved.has(e.id)).length;
     body.querySelector('[data-act=apply]')!.textContent = fresh ? `Show ${fresh} card${fresh === 1 ? '' : 's'}` : live.length ? 'Done' : 'No cards match';
 

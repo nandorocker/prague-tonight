@@ -87,7 +87,7 @@ export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
   detachSwipe = null;
   const cur = app.curation();
   const decisions = store.decisions();
-  const live = cur.deck.filter((e) => stillDeckable(e, app.now));
+  const live = cur.deck.filter((e) => stillDeckable(e, app.now, app.nowInstant));
   const { items: deck, hiddenUnknownPrice } = applyFilters(live, app.filters);
   const savedIds = new Set(store.saves().map((s) => s.id));
   const remaining = deck.filter((e) => !decisions[e.id] && !savedIds.has(e.id));

@@ -22,6 +22,10 @@ let labArtwork = 'none';
 const openSections = new Set<string>();
 
 export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
+  if (!app.demo) {
+    root.innerHTML = '<div class="empty"><h1>Tools are demo-only</h1><a href="#/">Back to the live deck</a></div>';
+    return;
+  }
   const cur = app.curation();
   const o = store.overrides();
   const rev = store.revision();

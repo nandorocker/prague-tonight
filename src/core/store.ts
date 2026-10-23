@@ -6,6 +6,7 @@ import type { Overrides } from './curate';
 import { placeText, priceText } from './format';
 import { artworkMap, normalizeArtwork } from '../posters/artwork';
 import type { ArtworkToken } from '../posters/assets';
+import { demo } from './mode';
 
 export interface SavedSnapshot {
   title: string;
@@ -28,6 +29,8 @@ export interface SavedItem {
   fav?: boolean;
   /** What the visitor saw when saving; used to flag later changes. */
   snap: SavedSnapshot;
+  /** Latest observed schedule; the original as-saved snapshot stays unchanged. */
+  lastObserved?: { night: DateKey; start?: WallTime };
 }
 
 export interface Filters {
@@ -46,8 +49,11 @@ export interface Revision {
 }
 
 const mem = new Map<string, string>();
+const scoped = (k: string) => demo ? k : k.replace(/^pt:/, 'pt:live:');
+const activeKey = (k: string) => demo ? k.startsWith('pt:') && !k.startsWith('pt:live:') : k.startsWith('pt:live:');
 const ls = {
   get(k: string): string | null {
+    k = scoped(k);
     try {
       return localStorage.getItem(k);
     } catch {
@@ -55,6 +61,7 @@ const ls = {
     }
   },
   set(k: string, v: string) {
+    k = scoped(k);
     try {
       localStorage.setItem(k, v);
     } catch {
@@ -62,6 +69,7 @@ const ls = {
     }
   },
   del(k: string) {
+    k = scoped(k);
     try {
       localStorage.removeItem(k);
     } catch {
@@ -110,6 +118,17 @@ export const store = {
   isSaved(id: string): boolean {
     return this.saves().some((s) => s.id === id);
   },
+  observeEvents(events: readonly PragueEvent[]) {
+    const byId = new Map(events.map((e) => [e.id, e]));
+    let changed = false;
+    const saves = this.saves().map((saved) => {
+      const e = byId.get(saved.id);
+      if (!e?.night || (saved.lastObserved?.night === e.night && saved.lastObserved.start === e.start)) return saved;
+      changed = true;
+      return { ...saved, lastObserved: { night: e.night, start: e.start } };
+    });
+    if (changed) write('pt:saves', saves);
+  },
   save(e: PragueEvent, family: FamilyId, now: WallTime, fav = false, artwork: ArtworkToken = 'none') {
     if (!e.night) return;
     const all = this.saves();
@@ -142,7 +161,7 @@ export const store = {
     if (!this.isSaved(item.id)) write('pt:saves', [...this.saves(), item]);
   },
 
-  /** Swipe decisions by event id. Event ids include the night, so one map serves every range. */
+  /** Swipe decisions by stable event id, shared across ranges and schedule changes. */
   decisions(): Record<string, 'save' | 'pass'> {
     return read('pt:deck', {});
   },
@@ -197,10 +216,10 @@ export const store = {
   /** Back to first launch: every pt: key, including editor overrides. */
   clearAll() {
     try {
-      for (const k of Object.keys(localStorage)) if (k.startsWith('pt:')) localStorage.removeItem(k);
+      for (const k of Object.keys(localStorage)) if (activeKey(k)) localStorage.removeItem(k);
     } catch {
       /* storage unavailable */
     }
-    mem.clear();
+    for (const k of mem.keys()) if (activeKey(k)) mem.delete(k);
   },
 };

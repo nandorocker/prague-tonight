@@ -15,7 +15,8 @@ export function filterCount(f: Filters): number {
 export function applyFilters(list: PragueEvent[], f: Filters): Filtered {
   let hiddenUnknownPrice = 0;
   const items = list.filter((e) => {
-    if (f.moods.length && !f.moods.includes(MOOD_OF[e.category])) return false;
+    const mood = MOOD_OF[e.category];
+    if (f.moods.length && (!mood || !f.moods.includes(mood))) return false;
     if (f.district && e.venue?.district !== f.district) return false;
     if (f.price !== 'any') {
       if (!e.price) {

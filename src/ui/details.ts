@@ -26,16 +26,16 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
   root.append(head);
 
   if (!e && !saved) {
-    root.insertAdjacentHTML('beforeend', `<div class="empty"><h2 class="display">Event not found.</h2><p>It may have been removed by its source.</p><a class="btn" href="#/">Back to the deck</a></div>`);
+    root.insertAdjacentHTML('beforeend', `<div class="empty"><h2 class="display">Event not found.</h2><p>Not in latest feed — check the original listing.</p><a class="btn" href="#/">Back to the deck</a></div>`);
     return;
   }
 
-  const status = statusOf(e, saved, app.now);
+  const status = statusOf(e, saved, app.now, app.nowInstant);
   const sec = document.createElement('article');
   sec.className = 'details';
 
   if (!e) {
-    // The listing vanished from every source; keep what the visitor saved.
+    // Absence from this snapshot does not prove removal; retain the save.
     const s = saved!.snap;
     sec.innerHTML = `
       <div class="badges">${badges(status)}</div>
@@ -89,7 +89,7 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
       <button type="button" class="btn ${isSaved ? 'btn-ghost' : 'btn-save'}" data-act="save" aria-pressed="${isSaved}">${isSaved ? `${icon.heartFill} Saved — remove` : `${icon.heart} Save to My Night`}</button>
       <button type="button" class="btn btn-fav ${saved?.fav ? 'on' : ''}" data-act="fav" aria-pressed="${!!saved?.fav}" aria-label="Favorite">${star('currentColor', '1.1em')}</button>
     </div>
-    <p class="source">Source: <a href="${esc(primary.url)}" target="_blank" rel="noopener">${esc(primary.name)}</a>${others.length ? ` · also listed by ${others.map((o) => `<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.name)}</a>`).join(', ')}` : ''} · updated ${esc(dayLabel(e.updatedAt.slice(0, 10)).toLowerCase())} ${clock(e.updatedAt)}</p>`;
+    <p class="source">Source: <a href="${esc(primary.url)}" target="_blank" rel="noopener">${esc(primary.name)}</a>${others.length ? ` · also listed by ${others.map((o) => `<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.name)}</a>`).join(', ')}` : ''} · ${app.demo ? 'updated' : 'collected'} ${esc(dayLabel(e.updatedAt.slice(0, 10)).toLowerCase())} ${clock(e.updatedAt)}</p>`;
 
   sec.querySelector('[data-act=save]')!.addEventListener('click', () => {
     if (isSaved) {

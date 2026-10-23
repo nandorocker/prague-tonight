@@ -9,7 +9,7 @@ import { normalize } from '../src/core/normalize';
 import { esc } from '../src/core/format';
 import { snapshot, store } from '../src/core/store';
 
-vi.stubGlobal('location', { search: '?now=2026-10-22T18:45' });
+vi.hoisted(() => { vi.stubGlobal('location', { search: '?demo=1&now=2026-10-22T18:45' }); });
 const { App } = await import('../src/app');
 const e = normalize(buildFixtures('2026-10-22')).find((x) => x.displayTitle === 'Draw with Strangers')!;
 const deck = (n: number) => Array.from({ length: n }, (_, i) => ({ ...e, id: `imagery-${i}` }));
@@ -27,6 +27,20 @@ beforeEach(() => {
 });
 
 describe('independent decorative artwork', () => {
+  it('keeps demo writes and reset separate from live storage', () => {
+    const local: Record<string, unknown> = { 'pt:live:span': '7' };
+    vi.stubGlobal('localStorage', Object.assign(local, {
+      getItem: (key: string) => local[key] ?? null,
+      setItem: (key: string, value: string) => { local[key] = value; },
+      removeItem: (key: string) => { delete local[key]; },
+    }));
+    store.setSpan(3);
+    expect(local['pt:span']).toBe('3');
+    expect(local['pt:live:span']).toBe('7');
+    store.clearAll();
+    expect(local['pt:span']).toBeUndefined();
+    expect(local['pt:live:span']).toBe('7');
+  });
   it.each([20, 30])('balances a %i-card initial sequence and keeps photographic / face runs rare', (n) => {
     const tokens = [...assignArtwork(deck(n), new Map()).values()];
     const counts = { none: 0, found: 0, cartoon: 0, collage: 0 };
