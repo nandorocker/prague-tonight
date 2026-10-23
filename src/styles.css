@@ -261,6 +261,13 @@ body:not([data-view='deck']):not([data-view='all']) .settings-btn {
   padding: 4px;
 }
 
+.feed-note {
+  margin: 0 16px 8px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .stale {
   margin: 0 16px 8px;
   padding: 10px 12px;

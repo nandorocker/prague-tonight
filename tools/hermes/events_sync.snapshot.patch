@@ -1,0 +1,27 @@
+--- events_sync.py
++++ events_sync.py
+@@ -1059,11 +1059,24 @@
+ 
+ 
+ def run(dry_run: bool = False) -> int:
++    collection_started_at = datetime.now(timezone.utc)
+     events = iter_all_events()
+     if dry_run:
+         print(dry_run_report(events))
+         return 0
+ 
++    # Private interchange snapshot only: no extra discovery, AI or calendar I/O.
++    # Keep this before calendar auth and export the FULL collection, not just
++    # changed events. Export errors must never block the existing calendar job.
++    try:
++        from events_snapshot import export_snapshot
++        export_snapshot(
++            events, cache=load_sync_cache(), source_hash=compute_source_hash,
++            collection_started_at=collection_started_at,
++        )
++    except Exception:
++        print("Prague event snapshot export failed; retaining previous snapshot.", file=sys.stderr)
++
+     cal_events = list_calendar_events()
+ 
+     token = json.loads(TOKEN_PATH.read_text())

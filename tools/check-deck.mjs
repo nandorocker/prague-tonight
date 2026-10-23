@@ -14,7 +14,7 @@ test('deck rendering and swipe interactions', { timeout: 60_000 }, async (t) => 
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${port}/?now=2026-10-23T18:45`, { waitUntil: 'networkidle0' });
+    await page.goto(`http://127.0.0.1:${port}/?demo=1&now=2026-10-23T18:45`, { waitUntil: 'networkidle0' });
     await page.evaluate(() => document.fonts.ready);
 
     const topId = () => page.$eval('.card.top', (card) => card.dataset.eventId);

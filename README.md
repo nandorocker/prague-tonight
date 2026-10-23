@@ -2,7 +2,7 @@
 
 A nightly event deck with shifting poster identities. Swipe through tonight's options, save the ones that click, and turn them into a plan in My Night.
 
-First-version prototype built from the creative handoff (product brief, wireframes, poster style system, curation blueprint). All events, venues, prices and links are fictional.
+Built from the creative handoff (product brief, wireframes, poster style system, curation blueprint). The default view loads real events collected by Hermes. The fictional prototype is still available with `?demo=1`, isolated from live saves.
 
 ```bash
 pnpm install
@@ -20,13 +20,13 @@ pnpm build        # typecheck + production build
 - **Event details**: title, blurb, time, venue, price, language, description, original listing, save and favorite.
 - **My Night**: Tonight or Upcoming, as a list or a schematic map. Favorites are starred. Live status: starts soon, on now, ended, canceled, changed since you saved. Saves live in this browser (localStorage).
 - **All events**: the full eligible list behind the deck, with the same settings.
-- **Tools** (hold the wordmark for a second, or open `#/ops`): resets (passes, My Night, everything), a clock you can pin to any moment, simulated cancellations and time changes, the deck in swipe order with per-card style / pin / remove, why events were left out, and a poster lab comparing one event across all 18 templates in four groups. The lab's imagery selector previews any library subject without changing the real deck.
+- **Tools** (demo mode only; hold the wordmark for a second, or open `?demo=1#/ops`): resets (passes, My Night, everything), a clock you can pin to any moment, simulated cancellations and time changes, the deck in swipe order with per-card style / pin / remove, why events were left out, and a poster lab comparing one event across all 18 templates in four groups. The lab's imagery selector previews any library subject without changing the real deck.
 
 The viewport is locked: the page never scrolls or rubber-bands. Only content areas (lists, details, sheets) scroll inside the fixed shell.
 
 ## How it's built
 
-Vite + vanilla TypeScript, no UI framework. Self-hosted Fira Sans, Fira Sans Extra Condensed, Instrument Serif and Baloo 2, all with Czech diacritics. No network or AI calls at runtime.
+Vite + vanilla TypeScript, no UI framework. Self-hosted Fira Sans, Fira Sans Extra Condensed, Instrument Serif and Baloo 2, all with Czech diacritics. Live mode reads one cached same-origin feed; there are no runtime AI calls or visitor-triggered discovery calls.
 
 - `src/data/fixtures.ts`: fictional source feed laid onto the real current dates, with a short blurb for every event. It includes the ugly cases from the QA list: a 120-character title, missing prices, cross-source duplicates, a cancellation, a 23:30–03:30 club night, missing coordinates, a dead source link, and 20 near-identical DJ listings.
 - `src/core/normalize.ts`: dedupe across sources and choose the best attribution. Only first-party sources can set a price, and non-http links are rejected.
@@ -35,6 +35,22 @@ Vite + vanilla TypeScript, no UI framework. Self-hosted Fira Sans, Fira Sans Ext
   - Each poster is seeded from the event identity and its family. Assignments stay stable for the same ordered deck, including when browsing with filters.
   - Titles are fitted rather than truncated. A title that can't fit gets a different family or the fallback.
 - `src/core/time.ts`: Prague wall-clock handling, the night cutoff, the window rules, and DST-correct countdowns.
+
+### Real-source integration
+
+Live mode reuses Hermes's existing Prague calendar collection through a private
+snapshot and a strict public-field adapter. [`tools/hermes/`](tools/hermes/README.md)
+documents installation, safety boundaries and tests. The Vite development and
+preview servers expose only the projected `/api/events` feed, with a shared
+one-minute read cache and failure backoff. No raw profile data is served.
+
+The app refreshes at most every 15 minutes and retains the source collection time internally for freshness checks.
+Failed refreshes retain the last good in-memory feed; initial failure never
+silently shows fictional events. Prices, uncertain end times and missing event
+types remain unknown. Missing listings are not labeled canceled or removed.
+Live IDs come from source identities, so title/time changes preserve saves.
+Production static files alone do not supply `/api/events`: serve with the
+configured server or provide an equivalent safe feed endpoint.
 
 ## Visual system: one product, many personas
 
@@ -100,8 +116,8 @@ Event details label subjects as **illustrative artwork, not event photography**,
 
 ## Testing hooks
 
-- `?now=2026-10-23T23:30` pins the Prague clock (it still ticks). The Tools screen sets this for you.
-- `?stale=1` shows the warning for data that failed to refresh (also a Tools checkbox).
+- `?demo=1&now=2026-10-23T23:30` pins the Prague clock in the fictional demo (it still ticks). The Tools screen sets this for you.
+- `?demo=1&stale=1` shows the demo warning for data that failed to refresh (also a Tools checkbox).
 - `node tools/screenshot.mjs --url '…' --steps '<js>;;SHOT:shots/a.png;;<js>'` drives headless Chrome at phone size.
 - `node tools/deck-audit.mjs [--span 1|3|7] [--fam acid,geo]` renders every card in a deck at real size into contact sheets under `shots/audit` and flags overlaps, overflow and truncated blurbs. `--matrix` instead renders every event in every poster family, with and without artwork, and prints a summary (no images).
 

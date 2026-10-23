@@ -10,6 +10,7 @@ import { PRAGUE_MAP, project } from './map';
 
 interface Row {
   saved: SavedItem;
+  night: string;
   e?: PragueEvent;
   start?: string;
 }
@@ -22,17 +23,17 @@ export function resetNightScope() {
   scope = 'tonight';
 }
 
-function rowsFor(app: App, which: Scope): Row[] {
+export function rowsFor(app: App, which: Scope): Row[] {
   return store
     .saves()
-    .filter((s) => (which === 'tonight' ? s.night === app.tonight : s.night >= app.tonight) && !isNightOver(s.night, app.now))
     .map((saved) => {
       const e = app.byId.get(saved.id);
-      return { saved, e, start: e?.start ?? saved.snap.start };
+      return { saved, e, night: e?.night ?? saved.lastObserved?.night ?? saved.night, start: e ? e.start : saved.lastObserved ? saved.lastObserved.start : saved.snap.start };
     })
+    .filter((r) => (which === 'tonight' ? r.night === app.tonight : r.night >= app.tonight) && !isNightOver(r.night, app.now))
     .sort(
       (a, b) =>
-        a.saved.night.localeCompare(b.saved.night) ||
+        a.night.localeCompare(b.night) ||
         (a.start ? 0 : 1) - (b.start ? 0 : 1) ||
         (a.start && b.start ? wallMinutes(a.start) - wallMinutes(b.start) : 0),
     );
@@ -92,9 +93,9 @@ export function renderNight(app: App, root: HTMLElement, mode: 'list' | 'map', r
   list.className = 'night-list';
   let lastNight = '';
   for (const r of rows) {
-    if (scope === 'upcoming' && r.saved.night !== lastNight) {
-      lastNight = r.saved.night;
-      list.insertAdjacentHTML('beforeend', `<h2 class="group">${r.saved.night === app.tonight ? 'Tonight' : esc(dayLabel(lastNight))}</h2>`);
+    if (scope === 'upcoming' && r.night !== lastNight) {
+      lastNight = r.night;
+      list.insertAdjacentHTML('beforeend', `<h2 class="group">${r.night === app.tonight ? 'Tonight' : esc(dayLabel(lastNight))}</h2>`);
     }
     list.append(rowEl(app, r, rerender));
   }
@@ -103,7 +104,7 @@ export function renderNight(app: App, root: HTMLElement, mode: 'list' | 'map', r
 
 function rowEl(app: App, r: Row, rerender: () => void): HTMLElement {
   const { e, saved } = r;
-  const st = statusOf(e, saved, app.now);
+  const st = statusOf(e, saved, app.now, app.nowInstant);
   const color = e ? familyColor(e, saved.snap.family) : '#CFC7B2';
   const dead = st.some((s) => s.kind === 'ended' || s.kind === 'canceled' || s.kind === 'removed');
   const el = document.createElement('div');
@@ -139,7 +140,7 @@ function mapView(app: App, rows: Row[]): HTMLElement {
   const pins = pinned
     .map((r, i) => {
       const [x, y] = project(r.e!.venue!.lat!, r.e!.venue!.lon!);
-      const dead = statusOf(r.e, r.saved, app.now).some((s) => ['ended', 'canceled', 'removed'].includes(s.kind));
+      const dead = statusOf(r.e, r.saved, app.now, app.nowInstant).some((s) => ['ended', 'canceled', 'removed'].includes(s.kind));
       const color = dead ? '#B9B3A3' : familyColor(r.e!, r.saved.snap.family);
       return `<g class="pin" tabindex="0" role="button" data-i="${i}" aria-label="${i + 1}: ${esc(r.e!.title)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
         <circle r="24" fill="${color}" stroke="#191919" stroke-width="2.5"/><text text-anchor="middle" dy="9" fill="${inkOn(color)}">${i + 1}</text></g>`;
@@ -163,7 +164,7 @@ function mapView(app: App, rows: Row[]): HTMLElement {
     const r = pinned[i];
     wrap.querySelectorAll('.pin').forEach((p) => p.classList.toggle('on', p.getAttribute('data-i') === String(i)));
     mapSelected = i;
-    const st = statusOf(r.e, r.saved, app.now);
+    const st = statusOf(r.e, r.saved, app.now, app.nowInstant);
     card.innerHTML = `<a href="#/event/${encodeURIComponent(r.saved.id)}"><b>${i + 1} · ${esc(posterTitle(r.e!))}</b>
       <span>${r.start ? clock(r.start) : ''} · ${esc(r.e!.venue!.district ?? '')} · ${esc(r.e!.venue!.name)} · Open detail ${icon.out}</span>
       ${st.length ? `<span class="badges">${badges(st)}</span>` : ''}</a>`;

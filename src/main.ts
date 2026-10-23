@@ -1,6 +1,7 @@
 import { App } from './app';
 import { filterCount } from './core/filters';
 import { esc } from './core/format';
+import { store } from './core/store';
 import { clock, dayLabel } from './core/time';
 import { renderAll } from './ui/all';
 import { clearDeckKeys, deckKeys, renderDeck } from './ui/deck';
@@ -30,6 +31,11 @@ const settingsBtn = document.querySelector<HTMLButtonElement>('.settings-btn')!;
 let current = '';
 
 function renderBanner() {
+  if (!app.demo) {
+    const state = app.loading ? 'Loading live events…' : app.error ?? (app.isStale() ? 'Feed may be stale — check the original listing.' : '');
+    banner.innerHTML = state ? `<p class="${app.isStale() ? 'stale' : 'feed-note'}" role="status">${esc(state)}</p>` : '';
+    return;
+  }
   banner.innerHTML = app.isStale()
     ? `<p class="stale" role="status">${navigator.onLine ? 'Couldn’t refresh' : 'You’re offline'} — showing events as of ${esc(dayLabel(app.fetchedAt.slice(0, 10)).toLowerCase())} ${clock(app.fetchedAt)}. Check the listing before you go.</p>`
     : '';
@@ -39,6 +45,10 @@ function route() {
   const hash = location.hash.replace(/^#\/?/, '');
   const [name, arg] = hash.split('/');
   const view = ['night', 'all', 'event', 'ops'].includes(name) ? name : 'deck';
+  let eventId = '';
+  if (view === 'event') {
+    try { eventId = decodeURIComponent(arg ?? ''); } catch { /* Malformed route: no matching event. */ }
+  }
   const changedView = view !== current;
   if (changedView && view === 'night' && current !== 'event') resetNightScope();
   current = view;
@@ -48,6 +58,10 @@ function route() {
   renderBanner();
 
   const rerender = () => route();
+  if (!app.demo && !app.collectedAt && (view === 'deck' || view === 'all' || (view === 'event' && !store.isSaved(eventId)))) {
+    main.innerHTML = `<div class="empty" role="status"><h1 class="display">${app.loading ? 'Loading live events…' : 'Live events unavailable'}</h1><p>${app.loading ? 'Fetching the latest source snapshot.' : 'No snapshot has loaded. Please try again later.'}</p></div>`;
+    return;
+  }
   switch (view) {
     case 'night':
       renderNight(app, main, arg === 'map' ? 'map' : 'list', rerender);
@@ -58,8 +72,8 @@ function route() {
       document.title = 'All events · Prague Tonight';
       break;
     case 'event':
-      renderDetails(app, main, decodeURIComponent(arg ?? ''), rerender);
-      document.title = `${app.byId.get(decodeURIComponent(arg ?? ''))?.title ?? 'Event'} · Prague Tonight`;
+      renderDetails(app, main, eventId, rerender);
+      document.title = `${app.byId.get(eventId)?.title ?? 'Event'} · Prague Tonight`;
       break;
     case 'ops':
       renderOps(app, main, rerender);
@@ -103,8 +117,18 @@ function refreshInPlace() {
 }
 
 window.addEventListener('hashchange', route);
-window.addEventListener('online', route);
-window.addEventListener('offline', route);
+let pendingRefresh = false;
+const interactionOpen = () => app.busy || !!document.querySelector('.sheet-backdrop, dialog[open]');
+async function refreshFeed() {
+  await app.refresh();
+  if (interactionOpen()) pendingRefresh = true;
+  else { pendingRefresh = false; refreshInPlace(); }
+}
+window.addEventListener('online', () => void refreshFeed());
+window.addEventListener('offline', () => {
+  if (interactionOpen()) pendingRefresh = true;
+  else refreshInPlace();
+});
 
 settingsBtn.addEventListener('click', () => openSettings(app, route));
 
@@ -117,7 +141,7 @@ logo.addEventListener('pointerdown', () => {
   pressTimer = window.setTimeout(() => {
     longPressed = true;
     navigator.vibrate?.(20);
-    location.hash = '#/ops';
+    if (app.demo) location.hash = '#/ops';
   }, 900);
 });
 for (const t of ['pointerup', 'pointerleave', 'pointercancel']) logo.addEventListener(t, () => clearTimeout(pressTimer));
@@ -141,13 +165,18 @@ document.addEventListener('keydown', (ev) => {
 setInterval(() => {
   const nightRolled = app.tick() && app.tonight !== document.body.dataset.night;
   document.body.dataset.night = app.tonight;
-  if (app.busy || document.querySelector('.sheet-backdrop')) return;
+  if (interactionOpen()) return;
+  if (pendingRefresh) { pendingRefresh = false; refreshInPlace(); return; }
   if (nightRolled) route();
   else if (current !== 'deck' && current !== 'ops') refreshInPlace();
 }, 30_000);
 document.body.dataset.night = app.tonight;
 
 route();
+if (!app.demo) {
+  void refreshFeed();
+  setInterval(() => void refreshFeed(), 15 * 60_000);
+}
 
 // Reveal once the first view is laid out and its fonts are in: no unstyled
 // frame, no fallback-face flash. The cap keeps a slow font from blocking.

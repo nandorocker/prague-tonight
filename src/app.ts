@@ -10,6 +10,8 @@ import { fromWallMinutes, nightOf, toPragueWall, wallMinutes, windowFor } from '
 import { familyFor } from './posters/assign';
 import { assignArtwork, fallbackArtwork, normalizeArtwork } from './posters/artwork';
 import type { ArtworkToken } from './posters/assets';
+import { demo } from './core/mode';
+import { parseFeed } from './core/feed';
 
 export type Swipe = 'save' | 'super' | 'pass';
 
@@ -20,7 +22,7 @@ interface UndoEntry {
 
 const params = new URLSearchParams(location.search);
 /** ?now=2026-10-23T18:45 pins the clock to a Prague wall time. */
-const fixedNow = params.get('now');
+const fixedNow = demo ? params.get('now') : null;
 const startedAt = Date.now();
 
 function readNow(): WallTime {
@@ -32,6 +34,13 @@ function readNow(): WallTime {
 }
 
 export class App {
+  readonly demo = demo;
+  loading = !demo;
+  error: string | null = null;
+  collectedAt: string | null = null;
+  private lastAttempt = -Infinity;
+  private refreshing = false;
+  nowInstant: number | undefined = demo ? undefined : Date.now();
   now: WallTime = readNow();
   span: Span = store.span();
   events: PragueEvent[] = [];
@@ -40,7 +49,7 @@ export class App {
   filters: Filters = store.filters();
   undo: UndoEntry[] = [];
   /** ?stale=1 simulates a failed refresh. */
-  simulatedStale = params.get('stale') === '1';
+  simulatedStale = demo && params.get('stale') === '1';
   /** When the feed was fetched. */
   fetchedAt: WallTime = this.now;
   /** Set to true while a card is being dragged so ticks don't re-render. */
@@ -53,15 +62,42 @@ export class App {
   }
 
   load() {
-    if (!this.simulatedStale) this.fetchedAt = this.now;
-    this.events = loadEvents(this.now, store.revision());
+    if (demo) {
+      if (!this.simulatedStale) this.fetchedAt = this.now;
+      this.events = loadEvents(this.now, store.revision());
+    }
     this.byId = new Map(this.events.map((e) => [e.id, e]));
     this.curations.clear();
+  }
+
+  /** Live snapshots are shared by the server; never regenerate fixtures on failure. */
+  async refresh(): Promise<void> {
+    if (demo || this.refreshing || Date.now() - this.lastAttempt < 15 * 60_000) return;
+    this.lastAttempt = Date.now();
+    this.refreshing = true;
+    this.loading = !this.collectedAt;
+    try {
+      const response = await fetch('/api/events', { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+      if (!response.ok) throw new Error('Feed unavailable');
+      const feed = parseFeed(await response.json());
+      store.observeEvents(feed.events);
+      this.events = feed.events;
+      this.collectedAt = feed.collectedAt;
+      this.fetchedAt = toPragueWall(new Date(feed.collectedAt));
+      this.error = feed.refreshFailed ? 'Couldn’t refresh — showing the last available snapshot' : null;
+      this.load();
+    } catch {
+      this.error = 'Couldn’t refresh the live feed';
+    } finally {
+      this.loading = false;
+      this.refreshing = false;
+    }
   }
 
   /** Advance the clock; reload when the city night rolls over. */
   tick(): boolean {
     const before = this.now;
+    this.nowInstant = demo ? undefined : Date.now();
     this.now = readNow();
     if (nightOf(before) !== nightOf(this.now)) {
       this.load();
@@ -86,7 +122,7 @@ export class App {
   curation(span: Span = this.span): Curation {
     let c = this.curations.get(span);
     if (!c) {
-      c = curate(this.events, windowFor(this.now, span), this.now, store.overrides());
+      c = curate(this.events, windowFor(this.now, span), this.now, store.overrides(), this.nowInstant);
       this.curations.set(span, c);
     }
     if (span === this.span) this.freezeArtwork(c.deck);
@@ -153,6 +189,7 @@ export class App {
   }
 
   isStale(): boolean {
+    if (!demo) return !!this.error || !navigator.onLine || (!!this.collectedAt && Date.now() - Date.parse(this.collectedAt) > 30 * 60 * 60_000);
     return this.simulatedStale || !navigator.onLine || wallMinutes(this.now) - wallMinutes(this.fetchedAt) > 6 * 60;
   }
 }

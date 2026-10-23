@@ -1,8 +1,8 @@
 import type { PragueEvent, WallTime } from '../types';
 import type { SavedItem } from '../core/store';
-import { hasStarted, isEnded } from '../core/curate';
+import { hasStarted, isEnded, minutesUntilStart } from '../core/curate';
 import { esc, priceText } from '../core/format';
-import { clock, minutesBetween } from '../core/time';
+import { clock } from '../core/time';
 
 const svg = (d: string, extra = '') =>
   `<svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${d}</svg>`;
@@ -23,14 +23,15 @@ export const icon = {
 };
 
 export interface Status {
-  kind: 'removed' | 'canceled' | 'ended' | 'on' | 'started' | 'soon' | 'changed';
+  kind: 'unavailable' | 'removed' | 'canceled' | 'ended' | 'on' | 'started' | 'soon' | 'changed';
   text: string;
 }
 
 /** Everything honest we can say about an event's state right now. */
-export function statusOf(e: PragueEvent | undefined, saved: SavedItem | undefined, now: WallTime): Status[] {
+export function statusOf(e: PragueEvent | undefined, saved: SavedItem | undefined, now: WallTime, nowInstant?: number): Status[] {
   const out: Status[] = [];
-  if (!e || !e.sourceAlive) {
+  if (!e) return [{ kind: 'unavailable', text: 'Not in latest feed — check the original listing' }];
+  if (!e.sourceAlive) {
     out.push({ kind: 'removed', text: 'Listing removed by source — check the original link' });
     return out;
   }
@@ -43,10 +44,10 @@ export function statusOf(e: PragueEvent | undefined, saved: SavedItem | undefine
   }
   if (e.canceled) return out;
   if (isEnded(e, now)) out.push({ kind: 'ended', text: 'Ended' });
-  else if (hasStarted(e, now)) {
+  else if (hasStarted(e, now, nowInstant)) {
     out.push(e.end ? { kind: 'on', text: `On now · until ${clock(e.end)}` } : { kind: 'started', text: `Started at ${clock(e.start!)}` });
   } else if (e.start) {
-    const mins = minutesBetween(now, e.start);
+    const mins = minutesUntilStart(e, now, nowInstant);
     if (mins <= 90) out.push({ kind: 'soon', text: `Starts in ${mins} min` });
   }
   return out;

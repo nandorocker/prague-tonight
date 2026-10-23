@@ -2,6 +2,7 @@ import type { Category, Mood, PragueEvent, Price } from '../types';
 import { clock } from './time';
 
 export const CATEGORY_LABEL: Record<Category, string> = {
+  other: 'Event',
   music: 'Music',
   nightlife: 'Club night',
   film: 'Film',
@@ -13,7 +14,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   community: 'Community',
 };
 
-export const MOOD_OF: Record<Category, Mood> = {
+export const MOOD_OF: Partial<Record<Category, Mood>> = {
   music: 'music',
   nightlife: 'nightlife',
   film: 'culture',

@@ -12,7 +12,8 @@ export type Category =
   | 'performance'
   | 'comedy'
   | 'workshop'
-  | 'community';
+  | 'community'
+  | 'other';
 
 export type Mood = 'music' | 'culture' | 'nightlife' | 'social';
 
@@ -76,6 +77,8 @@ export interface PragueEvent {
   title: string;
   displayTitle?: string;
   start?: WallTime;
+  /** Exact source instant for live countdowns, including the repeated DST hour. */
+  startInstant?: string;
   end?: WallTime;
   /** Night the event belongs to (city-night clock). */
   night?: DateKey;
