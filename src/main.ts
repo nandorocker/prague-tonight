@@ -1,13 +1,3 @@
-import '@fontsource/fira-sans-extra-condensed/600.css';
-import '@fontsource/fira-sans-extra-condensed/800.css';
-import '@fontsource/fira-sans/400.css';
-import '@fontsource/fira-sans/600.css';
-import '@fontsource/fira-sans/700.css';
-import '@fontsource/instrument-serif/400.css';
-import '@fontsource/instrument-serif/400-italic.css';
-import '@fontsource/baloo-2/800.css';
-import './styles.css';
-
 import { App } from './app';
 import { filterCount } from './core/filters';
 import { esc } from './core/format';
@@ -158,3 +148,10 @@ setInterval(() => {
 document.body.dataset.night = app.tonight;
 
 route();
+
+// Reveal once the first view is laid out and its fonts are in: no unstyled
+// frame, no fallback-face flash. The cap keeps a slow font from blocking.
+requestAnimationFrame(() => {
+  const reveal = () => document.documentElement.classList.remove('booting');
+  void Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(reveal, reveal);
+});
