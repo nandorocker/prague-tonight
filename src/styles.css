@@ -1,3 +1,5 @@
+@import './posters/originals.css';
+
 :root {
   --ink: #191919;
   --cream: #f4eedd;
@@ -1688,7 +1690,8 @@ body[data-view='ops'] #main {
   color: #8e8e93;
 }
 
-#lab-pick {
+#lab-pick,
+#lab-artwork {
   width: 100%;
   min-height: 38px;
   border-radius: 9px;
@@ -1984,6 +1987,26 @@ body[data-view='ops'] #main {
 .bl-culture { left: 10cqw; top: 21cqw; width: 36cqw; color: #191919; font-family: var(--serif); font-size: 3.9cqw; line-height: 1.12; -webkit-line-clamp: 5; max-height: 5lh; }
 .bl-geometric { left: 35cqw; top: 78cqw; width: 50cqw; padding: 2cqw; color: #244D4D; background: #F0E9D7; font-size: 3.1cqw; border-left: 1.3cqw solid #B9502E; }
 .bl-plain { left: 7cqw; top: 97cqw; width: 86cqw; font-size: 3cqw; -webkit-line-clamp: 2; max-height: 2lh; }
+
+/* Subjects have family-specific safe zones; factual bands are never image beds. */
+.p-subject { position: absolute; overflow: hidden; }
+.p-subject img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.p-subject.cutout img { object-fit: contain; }
+.fam-acid .p-subject { filter: saturate(.55) contrast(1.3); clip-path: polygon(7% 0,100% 0,93% 100%,0 100%); background: #8B47EF; }
+.fam-acid .p-subject.cutout { background: transparent; filter: drop-shadow(1cqw 1cqw 0 #F260BD); }
+.fam-typewall .p-subject { filter: grayscale(1) contrast(1.7); clip-path: polygon(0 4%,97% 0,100% 92%,2% 100%); background: #D9D5C9; }
+.fam-geo.has-artwork .p-brand { top: 17cqw; }
+.fam-geo .p-subject { border-radius: 45% 45% 32% 38%; background: #FFF3FB; border: 1cqw solid white; }
+.fam-quiet .p-subject { border-radius: 50% 50% 3% 3%; background: #DED0C2; filter: saturate(.65); }
+.fam-quiet.has-artwork .bl-quiet { top: 95cqw; width: 82cqw; font-size: 3.1cqw; -webkit-line-clamp: 2; max-height: 2lh; }
+.fam-swiss .p-subject { background: #F7F7F2; border-left: 2cqw solid #D93228; filter: grayscale(1) contrast(1.2); }
+.fam-afterhours .p-subject { background: #D5DAEF; border: .6cqw inset #FFF; border-radius: 1cqw; }
+.fam-afterhours.has-artwork .bl-afterhours { top: 94cqw; -webkit-line-clamp: 2; max-height: 2lh; font-size: 2.5cqw; }
+.fam-editorial .p-subject { background: #D5CDCF; border: .3cqw solid #191919; filter: saturate(.45); }
+.fam-collage .p-subject { background: #F5F1E7; padding: 1cqw; transform: rotate(-3deg); clip-path: polygon(2% 0,98% 2%,100% 96%,0 100%); }
+.fam-culture .p-subject { background: #F5F1E7; filter: sepia(.4) contrast(1.25); }
+.fam-geometric .p-subject { background: #F0E9D7; border-radius: 50% 50% 0 0; border: .7cqw solid #244D4D; }
+.fam-geometric.has-artwork .bl-geometric { left: 7cqw; top: 55cqw; width: 86cqw; padding: 0 2cqw; -webkit-line-clamp: 2; max-height: 2lh; }
 
 /* A stable reading order, not a universal panel: date/time, place/price, category. */
 .p-band {

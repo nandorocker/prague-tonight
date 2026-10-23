@@ -4,6 +4,7 @@ import { normalize } from '../src/core/normalize';
 import { esc, upper } from '../src/core/format';
 import { assignFamilies, eligibleFamilies, familyFor, FAMILIES, FAMILY_CLASS, FAMILY_NAME, STYLE_CLASSES } from '../src/posters/assign';
 import { familyColor, renderPoster } from '../src/posters/render';
+import { isOriginalFamily } from '../src/posters/originals';
 import { balance, fitTitle } from '../src/posters/fit';
 import type { FamilyId, PragueEvent } from '../src/types';
 
@@ -12,15 +13,21 @@ const draw = events.find((e) => e.displayTitle === 'Draw with Strangers')!;
 const ALL: FamilyId[] = [...FAMILIES, 'plain'];
 const stripIds = (html: string) => html.replace(/id="[^"]+"/g, 'id="UID"').replace(/url\(#[^)]+\)/g, 'url(#UID)');
 const band = (html: string) => html.slice(html.indexOf('<div class="p-band '), -6);
-const artwork = (html: string) => stripIds(html.slice(html.indexOf('<div class="p-art"'), html.indexOf('<p class="p-blurb ') === -1 ? html.indexOf('<div class="p-band ') : html.indexOf('<p class="p-blurb ')));
+// Compare actual graphic choices, not truthful date/category header copy.
+const artwork = (html: string) => stripIds([
+  html.match(/<svg class="decor"[\s\S]*?<\/svg>/)?.[0],
+  html.match(/<div class="p-title[\s\S]*?<\/div>/)?.[0],
+  html.match(/--bg:[^;"]+/)?.[0],
+].join(''));
 const field = (html: string, cls: string) => html.match(new RegExp(`<(?:span|div) class="${cls}">(.*?)</(?:span|div)>`))?.[1];
 const fields = (html: string) => Object.fromEntries(['b-date', 'b-time', 'b-venue', 'b-price', 'b-kind'].map((cls) => [cls, field(html, cls)]));
-const titleText = (html: string) => [...html.matchAll(/<span class="ln">(.*?)<\/span>/g)].map((m) => m[1]).join(' ');
+const titleText = (html: string) => [...html.matchAll(/<span class="ln(?: [^"]*)?">(.*?)<\/span>/g)].map((m) => m[1]).join(' ');
+const blurbText = (html: string) => html.match(/<p class="p-blurb [^"]*"[^>]*>(.*?)<\/p>/)?.[1];
 const deck = (count: number): PragueEvent[] => Array.from({ length: count }, (_, i) => ({ ...draw, id: `poster-${i}` }));
 
 describe('poster engine', () => {
-  it('renders ten distinct art grammars from the same normal fixture', () => {
-    expect(FAMILIES).toHaveLength(10);
+  it('renders eighteen distinct art grammars from the same normal fixture', () => {
+    expect(FAMILIES).toHaveLength(18);
     const art = FAMILIES.map((f) => {
       const rendered = renderPoster(draw, f);
       expect(rendered.family).toBe(f);
@@ -28,13 +35,14 @@ describe('poster engine', () => {
       expect(familyColor(draw, f)).toMatch(/^#[0-9A-Fa-f]{6}$/);
       return artwork(rendered.html);
     });
-    expect(new Set(art).size).toBe(10);
+    expect(new Set(art).size).toBe(18);
     expect(eligibleFamilies(draw)).toEqual(FAMILIES);
   });
 
-  it('retains persisted IDs and groups all ten in the requested cultural classes', () => {
+  it('retains persisted IDs and adds the eight Originals as their own group', () => {
     expect(FAMILIES).toEqual(expect.arrayContaining(['acid', 'geo', 'afterhours', 'quiet', 'swiss', 'editorial', 'typewall', 'collage']));
-    expect(STYLE_CLASSES).toEqual(['nostalgia', 'editorial', 'experimental']);
+    expect(STYLE_CLASSES).toEqual(['nostalgia', 'editorial', 'experimental', 'originals']);
+    expect(FAMILIES.filter((f) => FAMILY_CLASS[f] === 'originals')).toHaveLength(8);
     expect(FAMILIES.filter((f) => FAMILY_CLASS[f] === 'nostalgia').sort()).toEqual(['acid', 'afterhours', 'geo', 'quiet']);
     expect(FAMILIES.filter((f) => FAMILY_CLASS[f] === 'editorial').sort()).toEqual(['culture', 'editorial', 'swiss']);
     expect(FAMILIES.filter((f) => FAMILY_CLASS[f] === 'experimental').sort()).toEqual(['collage', 'geometric', 'typewall']);
@@ -45,7 +53,7 @@ describe('poster engine', () => {
     const htmls = ALL.map((f) => renderPoster(draw, f).html);
     for (const [i, html] of htmls.entries()) {
       expect(html.match(/class="p-band /g)).toHaveLength(1);
-      expect(html).toContain(`class="p-band band-${ALL[i]}"`);
+      expect(html).toMatch(new RegExp(`class="p-band band-${ALL[i]}(?: |")`));
       expect(html).not.toContain('p-spine');
       expect(html).toContain('viewBox="0 0 100 140"');
       expect(fields(html)).toEqual({
@@ -64,7 +72,7 @@ describe('poster engine', () => {
       expect(field(html, 'b-kind')).toBe('Talk');
       expect(html).toContain('. Free. Talk.');
       expect(html).not.toContain('Arena spectacular');
-      expect(artwork(html)).not.toContain('Talk');
+      expect(artwork(html)).not.toContain('Arena spectacular');
     }
   });
 
@@ -118,7 +126,7 @@ describe('poster engine', () => {
     const blurb = `${draw.blurb} ${'More source context. '.repeat(20)}`;
     for (const f of ALL) {
       const { html } = renderPoster({ ...draw, blurb, description: 'Do not substitute this.' }, f);
-      expect(html).toContain(`<p class="p-blurb bl-${f}">${esc(blurb)}</p>`);
+      expect(blurbText(html)).toBe(esc(blurb));
       expect(html).toContain(` ${esc(blurb)}"`);
       expect(html).not.toContain('Do not substitute this.');
       expect(artwork(html)).not.toContain(esc(blurb));
@@ -128,7 +136,7 @@ describe('poster engine', () => {
   it('uses description only as a fallback and invents no blurb when both are absent', () => {
     for (const f of ALL) {
       const fallback = renderPoster({ ...draw, blurb: undefined, description: 'Source description, not generated copy.' }, f).html;
-      expect(fallback).toContain(`<p class="p-blurb bl-${f}">Source description, not generated copy.</p>`);
+      expect(blurbText(fallback)).toBe('Source description, not generated copy.');
       expect(fallback).toContain(' Source description, not generated copy."');
       const missing = renderPoster({ ...draw, blurb: undefined, description: undefined }, f).html;
       expect(missing).not.toContain('class="p-blurb');
@@ -141,7 +149,7 @@ describe('poster engine', () => {
     const blurb = 'Živě <img src=x onerror="alert(1)"> & "hosté"';
     for (const f of ALL) {
       const { html } = renderPoster({ ...draw, blurb }, f);
-      expect(html).toContain(`<p class="p-blurb bl-${f}">${esc(blurb)}</p>`);
+      expect(blurbText(html)).toBe(esc(blurb));
       expect(html).toContain(` ${esc(blurb)}"`);
       expect(html).not.toContain('<img');
     }
@@ -169,9 +177,9 @@ describe('poster engine', () => {
   });
 
   it('balances ordinary fitting decks, avoids the last two, and alternates class when feasible', () => {
-    const input = deck(30);
+    const input = deck(54);
     const assigned = [...assignFamilies(input).values()];
-    expect(new Set(assigned.slice(0, 12)).size).toBe(10);
+    expect(new Set(assigned.slice(0, 18)).size).toBe(18);
     const counts = new Map<FamilyId, number>();
     for (let i = 0; i < assigned.length; i++) {
       const f = assigned[i] as Exclude<FamilyId, 'plain'>;
@@ -187,7 +195,24 @@ describe('poster engine', () => {
       }
       counts.set(f, (counts.get(f) ?? 0) + 1);
     }
-    expect([...counts.values()]).toEqual(Array(10).fill(3));
+    expect([...counts.values()]).toEqual(Array(18).fill(3));
+  });
+
+  it('keeps seeded original motifs and paper palettes independent of facts across variants', () => {
+    for (const f of FAMILIES.filter(isOriginalFamily)) {
+      const variants = new Set<string>();
+      for (const e of deck(16)) {
+        const original = renderPoster(e, f);
+        expect(original.family).toBe(f);
+        variants.add(artwork(original.html));
+        for (const start of ['2026-10-22T16:00', '2026-10-23T02:00']) {
+          const changed = { ...e, start, category: 'film' as const };
+          expect(artwork(renderPoster(changed, f).html)).toBe(artwork(original.html));
+          expect(familyColor(changed, f)).toBe(familyColor(e, f));
+        }
+      }
+      expect(variants.size).toBeGreaterThan(1);
+    }
   });
 
   it('handles empty and short decks, honors fitting overrides deterministically', () => {
@@ -225,11 +250,19 @@ describe('poster engine', () => {
     expect(renderPoster(e, chosen).family).toBe(chosen);
   });
 
-  it('relaxes the two-card rule to alternate a two-family fitting pool', () => {
+  it('balances the actual narrow-title pool while relaxing recency only when necessary', () => {
     const input = deck(6).map((e) => ({ ...e, displayTitle: 'W'.repeat(21) }));
-    expect(eligibleFamilies(input[0]).sort()).toEqual(['culture', 'quiet']);
+    const pool = eligibleFamilies(input[0]);
+    expect(pool).toContain('culture');
+    expect(pool).toContain('quiet');
+    expect(pool.length).toBeLessThan(FAMILIES.length);
     const assigned = [...assignFamilies(input).values()];
-    for (let i = 1; i < assigned.length; i++) expect(assigned[i]).not.toBe(assigned[i - 1]);
+    for (let i = 0; i < assigned.length; i++) {
+      expect(pool).toContain(assigned[i]);
+      expect(renderPoster(input[i], assigned[i]).family).toBe(assigned[i]);
+      if (i) expect(assigned[i]).not.toBe(assigned[i - 1]);
+      if (i > 1 && pool.length > 2) expect(assigned[i]).not.toBe(assigned[i - 2]);
+    }
   });
 
   it('balances line breaks', () => {

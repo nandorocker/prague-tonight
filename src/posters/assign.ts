@@ -12,6 +12,8 @@ export const FAMILIES: Exclude<FamilyId, 'plain'>[] = [
   'collage',
   'culture',
   'geometric',
+  'original-acid', 'original-editorial', 'original-swiss', 'original-geo',
+  'original-afterhours', 'original-typewall', 'original-quiet', 'original-collage',
 ];
 
 // Keep these persisted IDs: browser-local snapshots and overrides need no migration.
@@ -27,19 +29,30 @@ export const FAMILY_NAME: Record<FamilyId, string> = {
   culture: 'Indie Editorial / Culture Paper',
   geometric: 'Geometric Graphic System',
   plain: 'Plain (fallback)',
+  'original-acid': 'Original · Acid Flyer',
+  'original-editorial': 'Original · Editorial',
+  'original-swiss': 'Original · Swiss Grid',
+  'original-geo': 'Original · Geometric',
+  'original-afterhours': 'Original · After Hours',
+  'original-typewall': 'Original · Type Wall',
+  'original-quiet': 'Original · Quiet Signal',
+  'original-collage': 'Original · Street Collage',
 };
 
-export const STYLE_CLASSES = ['nostalgia', 'editorial', 'experimental'] as const;
+export const STYLE_CLASSES = ['nostalgia', 'editorial', 'experimental', 'originals'] as const;
 export type StyleClass = (typeof STYLE_CLASSES)[number];
 export const STYLE_CLASS_NAME: Record<StyleClass, string> = {
   nostalgia: 'Loud nostalgia',
   editorial: 'Tasteful editorial',
   experimental: 'Urban experimentation',
+  originals: 'Originals',
 };
 export const FAMILY_CLASS: Record<Exclude<FamilyId, 'plain'>, StyleClass> = {
   acid: 'nostalgia', geo: 'nostalgia', afterhours: 'nostalgia', quiet: 'nostalgia',
   culture: 'editorial', swiss: 'editorial', editorial: 'editorial',
   typewall: 'experimental', collage: 'experimental', geometric: 'experimental',
+  'original-acid': 'originals', 'original-editorial': 'originals', 'original-swiss': 'originals', 'original-geo': 'originals',
+  'original-afterhours': 'originals', 'original-typewall': 'originals', 'original-quiet': 'originals', 'original-collage': 'originals',
 };
 export const FAMILY_DESCRIPTION: Record<Exclude<FamilyId, 'plain'>, string> = {
   acid: 'Chrome italic lettering, violet stage light and angular lightning.',
@@ -52,6 +65,14 @@ export const FAMILY_DESCRIPTION: Record<Exclude<FamilyId, 'plain'>, string> = {
   collage: 'Bright torn papers, tape corners and bold pasted word stacks.',
   culture: 'Warm arts-paper grids, confident serif headlines and oversized print motifs.',
   geometric: 'Interlocking modernist arcs and bars in burnt orange, teal and cream.',
+  'original-acid': 'Acid-bright paper, concentric rings, hatching and alternating boxed type.',
+  'original-editorial': 'Cream paper, restrained serif headlines and a striped color block.',
+  'original-swiss': 'Numbered modular grids, condensed type and primary-color signals.',
+  'original-geo': 'Oversized circles and polygons behind cream boxed headlines.',
+  'original-afterhours': 'Neon rings, waves or rays on a dark technical grid.',
+  'original-typewall': 'Giant alternating boxed word stacks on saturated hatched paper.',
+  'original-quiet': 'Quiet serif typography and one small graphic sign on paper or charcoal.',
+  'original-collage': 'Layered colored paper, print grain and alternating ink-and-cream type.',
 };
 
 export function posterTitle(e: PragueEvent): string {

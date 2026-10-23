@@ -5,6 +5,7 @@ import { clock, dayLabel, weekdayShort } from '../core/time';
 import { fitDom } from '../posters/fit';
 import { renderPoster, star } from '../posters/render';
 import { badges, icon, statusOf, toast } from './common';
+import { artworkAsset } from '../posters/artwork';
 
 function back(app: App) {
   if (app.inAppNavs > 0) {
@@ -55,6 +56,8 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
   }
 
   const fam = app.familyOf(e);
+  const poster = renderPoster(e, fam, app.artworkOf(e));
+  const art = artworkAsset(poster.artwork);
   const isSaved = !!saved;
   const startDay = e.start?.slice(0, 10);
   const crosses = e.start && startDay !== e.night;
@@ -67,7 +70,8 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
   const mapsQuery = e.venue?.address && e.venue.lat ? `https://www.openstreetmap.org/?mlat=${e.venue.lat}&mlon=${e.venue.lon}#map=17/${e.venue.lat}/${e.venue.lon}` : null;
 
   sec.innerHTML = `
-    <div class="det-poster ${e.canceled ? 'is-canceled' : ''}">${renderPoster(e, fam).html}${e.canceled ? '<div class="cancel-band">CANCELED</div>' : ''}</div>
+    <div class="det-poster ${e.canceled ? 'is-canceled' : ''}">${poster.html}${e.canceled ? '<div class="cancel-band">CANCELED</div>' : ''}</div>
+    <p class="note artwork-credit">${art ? `Illustrative artwork, not event photography: ${esc(art.label)}. ${esc(art.attribution)} · ${esc(art.rights)}${art.sourceUrl ? ` · <a href="${esc(art.sourceUrl)}" target="_blank" rel="noopener">Artwork source</a>` : ''}.` : 'Image-free poster design. Poster artwork is illustrative, not event photography.'}</p>
     ${status.length ? `<div class="badges">${badges(status)}</div>` : ''}
     <h1 class="ev-title" tabindex="-1">${esc(e.title)}</h1>
     ${e.blurb ? `<p class="lead">${esc(e.blurb)}</p>` : ''}

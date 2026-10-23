@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
+  <title>Red rotary telephone</title>
+  <g stroke="#24202b" stroke-width="7" stroke-linejoin="round">
+    <path d="M88 110h222l42 106q5 21-19 23H66q-24-2-17-23Z" fill="#ce4539"/>
+    <path d="M87 110h224l15 40H73Z" fill="#ed7960"/>
+    <path d="M83 65q112-60 230 0l-6 57-55-5-5-31q-46-17-94 0l-5 31-62 5Z" fill="#b63334"/>
+    <path d="M97 66q92-39 203 0" fill="none" stroke="#f6b18c"/>
+    <ellipse cx="200" cy="177" rx="63" ry="43" fill="#f0ddba"/>
+    <ellipse cx="200" cy="177" rx="24" ry="16" fill="#483e45" stroke-width="4"/>
+    <g fill="#36323a" stroke="none"><ellipse cx="158" cy="161" rx="8" ry="6"/><ellipse cx="180" cy="148" rx="8" ry="6"/><ellipse cx="206" cy="145" rx="8" ry="6"/><ellipse cx="233" cy="153" rx="8" ry="6"/><ellipse cx="246" cy="173" rx="8" ry="6"/><ellipse cx="236" cy="191" rx="8" ry="6"/><ellipse cx="210" cy="204" rx="8" ry="6"/><ellipse cx="181" cy="201" rx="8" ry="6"/><ellipse cx="159" cy="186" rx="8" ry="6"/></g>
+    <path d="M312 92q61-10 40 25t0 25-3 25 6 25-3 28" fill="none" stroke-width="6"/>
+    <path d="M68 230h263" stroke="#87282d" stroke-width="9"/>
+  </g>
+</svg>

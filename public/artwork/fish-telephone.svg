@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 300">
+  <title>A fish answering a telephone</title>
+  <defs><pattern id="lines" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 1h6" stroke="#33323b" stroke-width="1"/></pattern></defs>
+  <path d="m31 57 123-25 44 231-162 8 6-74-10-33Z" fill="#bcc8ae"/>
+  <path d="m170 42 190 22-11 203-202-9Z" fill="#ead9bc"/>
+  <path d="m174 49 173 19-4 71-173-7Z" fill="url(#lines)" opacity=".45"/>
+  <g stroke="#342b38" stroke-width="5" stroke-linejoin="round">
+    <path d="M100 186h189l32 68H69Z" fill="#c95f45"/>
+    <ellipse cx="196" cy="220" rx="43" ry="26" fill="#e5cf9d"/><ellipse cx="196" cy="220" rx="18" ry="11" fill="#342b38"/>
+    <path d="M88 112q93-75 163-14l67-34-22 47 23 38-69-22q-91 41-162-15Z" fill="#90aba5"/>
+    <path d="m142 80 2 63m28-72 4 76m22-71 6 64m20-49 6 42" stroke-width="2"/>
+    <circle cx="119" cy="108" r="9" fill="#f0dfb7"/><circle cx="117" cy="108" r="3" fill="#342b38" stroke="none"/>
+    <path d="M50 131q40-19 80 3l-1 28-24-3-3-14-25-1-2 15-24-4Z" fill="#342b38"/>
+    <path d="M54 153q-32 17-7 26t-1 20 14 19 14 20" fill="none"/>
+  </g>
+  <path d="m266 30 57 12-3 15-58-13m-210 188 51 5-2 14-52-5" fill="#f4e7cb" opacity=".85"/>
+</svg>

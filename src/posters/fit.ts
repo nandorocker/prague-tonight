@@ -81,10 +81,22 @@ export function fitTitle(text: string, o: FitOptions): FitResult {
   return bestFit;
 }
 
-/**
- * Shrink any title whose rendered lines overflow their box. Runs after fonts
- * have loaded; deterministic for a given font.
- */
+/** Replace the entire composition; never leave an empty image slot behind. */
+export function replaceArtworkWithFallback(poster: HTMLElement, reason: 'load' | 'fit'): HTMLElement | null {
+  const fallback = poster.nextElementSibling;
+  if (!(fallback instanceof HTMLTemplateElement) || !fallback.classList.contains('artwork-fallback')) return null;
+  const plain = fallback.content.firstElementChild?.cloneNode(true) as HTMLElement | undefined;
+  if (!plain) return null;
+  plain.dataset.artworkFallback = reason;
+  plain.dataset.requestedArtwork = poster.dataset.artwork;
+  poster.replaceWith(plain);
+  fallback.remove();
+  const credit = plain.closest('.details')?.querySelector<HTMLElement>('.artwork-credit');
+  if (credit) credit.textContent = `Image-free poster design${reason === 'load' ? ' (illustrative artwork could not load)' : ' to keep the full headline readable'}. Poster artwork is illustrative, not event photography.`;
+  return plain;
+}
+
+/** Correct font overflow, dropping imagery before shrinking below its type minimum. */
 export function fitDom(root: ParentNode): void {
   root.querySelectorAll<HTMLElement>('.p-title').forEach((t) => {
     const poster = t.closest<HTMLElement>('.poster');
@@ -99,6 +111,11 @@ export function fitDom(root: ParentNode): void {
     const ratio = Math.min(1, maxW / widest, maxH / Math.max(t.scrollHeight, 1));
     if (ratio < 0.995) {
       const size = parseFloat(t.style.fontSize) * ratio * 0.98;
+      if (poster.classList.contains('has-artwork') && size < Number(t.dataset.min)) {
+        const plain = replaceArtworkWithFallback(poster, 'fit');
+        if (plain?.parentElement) fitDom(plain.parentElement);
+        return;
+      }
       t.style.fontSize = `${size}cqw`;
     }
   });

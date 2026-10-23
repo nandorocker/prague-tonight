@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
+  <title>A sardine escaping its tin</title>
+  <g stroke="#213c48" stroke-width="6" stroke-linejoin="round">
+    <path d="m66 131 250-20 18 107q-5 22-38 24l-193 15q-27-2-31-18Z" fill="#d56e39"/>
+    <path d="m70 147 247-20 11 81-248 20Z" fill="#f1dd8c"/>
+    <path d="m66 131q-4-22 22-27l198-20q31-1 31 27t-28 28L96 158q-26 0-30-27Z" fill="#c4c7b9"/>
+    <path d="m84 125 209-20q12 12-7 17L98 140q-11 0-14-15Z" fill="#26495b"/>
+    <path d="M106 115Q192 16 272 81l75-29-30 53 35 39-77-10q-89 48-169-19Z" fill="#7ca5a0"/>
+    <path d="M106 115q43-41 74-54l-2 81q-29-1-72-27Z" fill="#d8deca"/>
+    <circle cx="143" cy="104" r="10" fill="#f5e9be"/><circle cx="142" cy="105" r="4" fill="#213c48" stroke="none"/>
+    <path d="m195 70 4 62m17-68 3 75m17-73 3 72m17-60 3 50" fill="none" stroke-width="3"/>
+    <path d="m81 103-37-32q-8-12 3-16l89-8-32 44" fill="#e0d7bc"/>
+    <ellipse cx="76" cy="68" rx="20" ry="11" fill="none" stroke-width="4"/>
+  </g>
+</svg>

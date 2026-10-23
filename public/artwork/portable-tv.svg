@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+  <title>Portable television</title>
+  <g stroke="#302c39" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m157 87-55-60m60 56 57-65" fill="none" stroke-width="5"/>
+    <path d="m80 259-13 29m164-29 15 29" fill="none" stroke-width="10"/>
+    <rect x="30" y="86" width="260" height="179" rx="28" fill="#b67e55"/>
+    <rect x="46" y="101" width="228" height="146" rx="22" fill="#e5c697"/>
+    <path d="M64 119q72-14 143 0 14 52 0 108-71 12-143 0-14-52 0-108Z" fill="#95aca6"/>
+    <path d="M77 131q58-10 115-2" fill="none" stroke="#dce6c7" stroke-width="6"/>
+    <circle cx="242" cy="134" r="13" fill="#544955"/><path d="m237 140 11-14" stroke="#f3e5c5" stroke-width="3"/>
+    <circle cx="242" cy="173" r="10" fill="#544955"/>
+    <path d="M228 207h27m-27 10h27m-27 10h27" stroke-width="3"/>
+    <path d="m94 166 28-17 26 18 31-17m-85 39 29-17 29 18 28-16" fill="none" stroke="#506e71" stroke-width="3"/>
+  </g>
+</svg>

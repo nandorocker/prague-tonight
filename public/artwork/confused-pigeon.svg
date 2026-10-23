@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+  <title>A confused pigeon</title>
+  <g stroke="#173b56" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m137 251-8 37m62-43 12 41m-74 2-23 6m25-7 18 12m54-13-21 11m22-11 21 8" fill="none" stroke="#b24d45" stroke-width="7"/>
+    <path d="M65 210 28 218l34-42q24-44 61-42 0-54 39-71 43-21 63 9 19 27-7 59 40 73 12 112-16 29-86 21-54-5-79-54Z" fill="#a1c6d5"/>
+    <path d="M124 136q42 39 95-10l5 32q-58 34-91 5Z" fill="#498c88"/>
+    <path d="M87 174q49-27 106 39-25 37-65 26-28-9-41-65Z" fill="#557a9c"/>
+    <path d="m113 187 52 34m-55-13 38 24" fill="none" stroke="#c9d6d6"/>
+    <path d="m223 104 42 11-45 10" fill="#e8a459"/>
+    <circle cx="198" cy="94" r="18" fill="#f4e4ba"/><circle cx="204" cy="91" r="5" fill="#173b56" stroke="none"/>
+    <path d="m177 69 30-7m-36-5 9-15" fill="none"/>
+    <path d="M268 48q-4-16 11-18 17 1 12 17-7 8-15 12v7m-1 14h1" fill="none" stroke="#bf5c45" stroke-width="7"/>
+  </g>
+</svg>

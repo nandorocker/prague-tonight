@@ -18,6 +18,20 @@ import { renderDetails } from './ui/details';
 import { renderNight, resetNightScope, upcomingCount } from './ui/night';
 import { renderOps } from './ui/ops';
 import { openSettings } from './ui/settings';
+import { artworkAsset } from './posters/artwork';
+import { fitDom, replaceArtworkWithFallback } from './posters/fit';
+
+// Capture even cached failures. The inert sibling holds the complete image-free
+// composition, not a hole where an unavailable subject used to be.
+document.addEventListener('error', (ev) => {
+  const img = ev.target;
+  if (!(img instanceof HTMLImageElement)) return;
+  const asset = artworkAsset(img.dataset.artwork);
+  if (!asset || !asset.src.startsWith('/artwork/') || img.getAttribute('src') !== asset.src) return;
+  const poster = img.closest<HTMLElement>('.poster');
+  const plain = poster && replaceArtworkWithFallback(poster, 'load');
+  if (plain?.parentElement) fitDom(plain.parentElement);
+}, true);
 
 const app = new App();
 const main = document.getElementById('main')!;

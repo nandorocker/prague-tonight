@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 300">
+  <title>A moon sitting on a chair</title>
+  <defs><pattern id="dots" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#332c39"/></pattern></defs>
+  <path d="m20 57 262-31 8 33-10 14 12 31-1 96-263 19 9-40-13-34Z" fill="#e7d8b6"/>
+  <path d="m233 57 119 23-22 183-139-11Z" fill="#e89071"/>
+  <path d="M42 65h239v129H42Z" fill="url(#dots)" opacity=".45"/>
+  <g fill="none" stroke="#302b3b" stroke-width="5"><ellipse cx="192" cy="147" rx="171" ry="50" transform="rotate(-23 192 147)"/><path d="m124 195-7 88m92-83 18 83" stroke-width="9"/></g>
+  <path d="m112 188-6-49 95-7 20 65-47 23Z" fill="#799486" stroke="#302b3b" stroke-width="5"/>
+  <path d="m113 189 63 15 44-13" fill="none" stroke="#e9dfb6" stroke-width="6"/>
+  <path d="M233 48q-95-33-118 43-18 67 59 81 45 6 72-37-66 21-78-36-6-34 65-51Z" fill="#ede9d7" stroke="#302b3b" stroke-width="4"/>
+  <path d="m129 105 18-2m-4 10-6 17 10 2m-5 12 19 0" fill="none" stroke="#302b3b" stroke-width="3"/>
+  <path d="m36 57 48-4-1 14-48 3m229 158 48-4 1 14-48 3" fill="#e9e0c7" opacity=".85"/>
+  <circle cx="325" cy="105" r="18" fill="#284c65"/>
+</svg>

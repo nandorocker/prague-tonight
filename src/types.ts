@@ -97,7 +97,8 @@ export interface PragueEvent {
   sources: SourceRef[];
 }
 
-export type FamilyId =
+export type OriginalFamilyId = `original-${'acid' | 'editorial' | 'swiss' | 'geo' | 'afterhours' | 'typewall' | 'quiet' | 'collage'}`;
+export type IllustratedFamilyId =
   | 'acid'
   | 'editorial'
   | 'swiss'
@@ -107,8 +108,8 @@ export type FamilyId =
   | 'quiet'
   | 'collage'
   | 'culture'
-  | 'geometric'
-  | 'plain';
+  | 'geometric';
+export type FamilyId = IllustratedFamilyId | OriginalFamilyId | 'plain';
 
 /** How many nights ahead the deck looks, starting tonight. */
 export type Span = 1 | 3 | 7;

@@ -69,7 +69,7 @@ export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
     const n = document.createElement('div');
     n.className = 'card next';
     n.setAttribute('aria-hidden', 'true');
-    n.innerHTML = renderPoster(next, cur.family.get(next.id)!).html;
+    n.innerHTML = renderPoster(next, cur.family.get(next.id)!, app.artworkOf(next)).html;
     stack.append(n);
   }
   const card = document.createElement('div');
@@ -80,7 +80,7 @@ export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
   card.setAttribute('role', 'group');
   card.setAttribute('aria-roledescription', 'poster');
   card.setAttribute('aria-label', `${top.title}. Tap for details. Right arrow saves, left passes, up marks a favorite.`);
-  card.innerHTML = `${renderPoster(top, cur.family.get(top.id)!).html}
+  card.innerHTML = `${renderPoster(top, cur.family.get(top.id)!, app.artworkOf(top)).html}
     <div class="stamp stamp-save" aria-hidden="true"><span>${esc(word(top.id, 'right'))}</span></div>
     <div class="stamp stamp-pass" aria-hidden="true"><span>${esc(word(top.id, 'left'))}</span></div>
     <div class="stamp stamp-super" aria-hidden="true"><span>${star('currentColor', '0.8em')} ${esc(word(top.id, 'up'))}</span></div>`;

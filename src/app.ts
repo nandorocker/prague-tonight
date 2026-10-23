@@ -8,6 +8,8 @@ import { loadEvents } from './core/data';
 import { store, type Filters, type SavedItem } from './core/store';
 import { fromWallMinutes, nightOf, toPragueWall, wallMinutes, windowFor } from './core/time';
 import { familyFor } from './posters/assign';
+import { assignArtwork, fallbackArtwork, normalizeArtwork } from './posters/artwork';
+import type { ArtworkToken } from './posters/assets';
 
 export type Swipe = 'save' | 'super' | 'pass';
 
@@ -87,11 +89,40 @@ export class App {
       c = curate(this.events, windowFor(this.now, span), this.now, store.overrides());
       this.curations.set(span, c);
     }
+    if (span === this.span) this.freezeArtwork(c.deck);
     return c;
   }
 
+  private freezeArtwork(deck: readonly PragueEvent[]) {
+    const stored = store.artwork();
+    const known = new Map(stored);
+    // Saved snapshots win, including image-free saves from before the art library.
+    for (const saved of store.saves()) known.set(saved.id, normalizeArtwork(saved.snap.artwork));
+    const assigned = assignArtwork(deck, known);
+    for (const [id, token] of assigned) known.set(id, token);
+    const changed = known.size !== stored.size || [...known].some(([id, token]) => stored.get(id) !== token);
+    if (changed) store.setArtwork(known);
+  }
+
+  artworkOf(e: PragueEvent): ArtworkToken {
+    const saved = store.saves().find((s) => s.id === e.id);
+    if (saved) {
+      const token = normalizeArtwork(saved.snap.artwork);
+      const known = store.artwork();
+      if (known.get(e.id) !== token) { known.set(e.id, token); store.setArtwork(known); }
+      return token;
+    }
+    this.curation();
+    const known = store.artwork();
+    if (!known.has(e.id)) {
+      known.set(e.id, fallbackArtwork(e.id));
+      store.setArtwork(known);
+    }
+    return known.get(e.id)!;
+  }
+
   save(e: PragueEvent, fav = false) {
-    store.save(e, this.familyOf(e), this.now, fav);
+    store.save(e, this.familyOf(e), this.now, fav, this.artworkOf(e));
     store.decide(e.id, 'save');
   }
 

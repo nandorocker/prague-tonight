@@ -12,8 +12,12 @@ import { eligibleFamilies, FAMILIES, FAMILY_CLASS, FAMILY_DESCRIPTION, FAMILY_NA
 import { fitDom } from '../posters/fit';
 import { renderPoster } from '../posters/render';
 import { clip, toast } from './common';
+import { ARTWORK_ASSETS } from '../posters/assets';
+import { artworkAsset, artworkMode } from '../posters/artwork';
+import { isOriginalFamily } from '../posters/originals';
 
 let labEventId: string | null = null;
+let labArtwork = 'none';
 /** Which collapsible sections are open, kept across re-renders. */
 const openSections = new Set<string>();
 
@@ -23,6 +27,8 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
   const rev = store.revision();
   const decisions = store.decisions();
   const saves = store.saves();
+  const mix = { none: 0, found: 0, cartoon: 0, collage: 0 };
+  for (const e of cur.deck) mix[artworkMode(app.artworkOf(e))]++;
   const passes = Object.values(decisions).filter((d) => d === 'pass').length;
   const params = new URLSearchParams(location.search);
   const pinnedClock = params.get('now');
@@ -79,6 +85,7 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
         ${SPANS.map((s) => `<button type="button" data-span="${s}" class="${s === app.span ? 'on' : ''}">${SPAN_LABEL[s]}</button>`).join('')}
       </div>
       <p class="ops-stats"><b>${cur.deck.length}</b> cards · <b>${cur.index.length}</b> listed · <b>${cur.excluded.filter((x) => !x.listed).length}</b> blocked</p>
+      <p class="ops-hint">Imagery choices: ${mix.none} subject-free · ${mix.found} photo / object · ${mix.cartoon} cartoon · ${mix.collage} collage. Choices stay with the event, not its category or style; fitting and image failures may show an image-free fallback.</p>
 
       ${section(
         'deck',
@@ -91,9 +98,10 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
             const d = decisions[e.id];
             return `<li data-id="${esc(e.id)}">
               <span class="n">${i + 1}</span>
-              <div class="thumb">${renderPoster(e, fam).html}</div>
+              <div class="thumb">${renderPoster(e, app.familyOf(e), app.artworkOf(e)).html}</div>
               <div class="info"><b>${esc(e.displayTitle ?? e.title)}</b>
                 <small>${e.start ? `${esc(dayLabel(e.night!))} ${clock(e.start)}` : ''} · ${esc(e.venue?.name ?? '')}${d ? ` · <em>${d === 'pass' ? 'passed' : 'saved'}</em>` : ''}</small>
+                <small>Art: ${esc(artworkAsset(app.artworkOf(e))?.label ?? 'Subject-free')}</small>
                 <div class="acts">
                   <select data-op="family" aria-label="Poster style">${([...FAMILIES, 'plain'] as FamilyId[]).map((f) => `<option value="${f}" ${f === fam ? 'selected' : ''} ${f !== 'plain' && !fitting.includes(f) ? 'disabled' : ''}>${esc(FAMILY_NAME[f])}</option>`).join('')}</select>
                   <button type="button" data-op="pin" class="${o.pinned.includes(e.id) ? 'on' : ''}">${o.pinned.includes(e.id) ? 'Pinned' : 'Pin'}</button>
@@ -125,12 +133,14 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
       ${section(
         'lab',
         'Poster lab',
-        `${FAMILIES.length} personas · ${STYLE_CLASSES.length} classes`,
+        `${FAMILIES.length} templates · ${STYLE_CLASSES.length} groups`,
         `<p class="ops-hint">Same event, different treatments. Compare how each family handles the facts and source blurb.</p>
         <label class="lab-label" for="lab-pick">Event to preview</label>
         <select id="lab-pick">${cur.index
           .map((e) => `<option value="${esc(e.id)}" ${e.id === (labEventId ?? cur.deck[0]?.id) ? 'selected' : ''}>${esc(clip(e.title, 60))}</option>`)
-          .join('')}</select><div class="ops-lab"></div>`,
+          .join('')}</select>
+        <label class="lab-label" for="lab-artwork">Illustrative imagery (preview only)</label>
+        <select id="lab-artwork"><option value="none" ${labArtwork === 'none' ? 'selected' : ''}>No image / subject-free</option>${ARTWORK_ASSETS.map((a) => `<option value="${esc(a.id)}" ${a.id === labArtwork ? 'selected' : ''}>${esc(a.kind)} · ${esc(a.label)}</option>`).join('')}</select><div class="ops-lab"></div>`,
       )}
     </div>`;
 
@@ -151,9 +161,9 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
     const lab = root.querySelector<HTMLElement>('.ops-lab');
     if (!e || !lab) return;
     const preview = (f: FamilyId) => {
-      const r = renderPoster(e, f);
+      const r = renderPoster(e, f, labArtwork);
       const description = f === 'plain' ? 'Full-title typography when an expressive treatment cannot fit.' : FAMILY_DESCRIPTION[f];
-      return `<figure><div class="thumb">${r.html}</div><figcaption><b>${esc(FAMILY_NAME[f])}</b><small>${esc(description)}</small>${r.family !== f ? '<small>Showing plain fallback to keep the full title.</small>' : ''}</figcaption></figure>`;
+      return `<figure><div class="thumb">${r.html}</div><figcaption><b>${esc(FAMILY_NAME[f])}</b><small>${esc(description)}</small>${r.family !== f ? '<small>Showing plain fallback to keep the full title.</small>' : r.artwork !== labArtwork ? isOriginalFamily(f) ? '<small>Originals intentionally keep their image-free graphic design.</small>' : '<small>Image-free fallback keeps the full headline.</small>' : ''}</figcaption></figure>`;
     };
     lab.innerHTML = STYLE_CLASSES.map((styleClass) => `<section class="lab-class" aria-labelledby="lab-${styleClass}">
       <h3 id="lab-${styleClass}">${esc(STYLE_CLASS_NAME[styleClass])}</h3>
@@ -163,6 +173,10 @@ export function renderOps(app: App, root: HTMLElement, rerender: () => void) {
     void document.fonts.ready.then(() => fitDom(lab));
   };
   root.querySelector('#lab-pick')!.addEventListener('change', drawLab);
+  root.querySelector<HTMLSelectElement>('#lab-artwork')!.addEventListener('change', (ev) => {
+    labArtwork = (ev.target as HTMLSelectElement).value;
+    drawLab();
+  });
   if (openSections.has('lab')) drawLab();
   void document.fonts.ready.then(() => root.querySelectorAll<HTMLDetailsElement>('details[open]').forEach((d) => fitDom(d)));
 

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 300">
+  <title>A pigeon orbiting a television</title>
+  <defs><pattern id="grain" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#292f41"/><circle cx="7" cy="6" r=".7" fill="#292f41"/></pattern></defs>
+  <path d="m27 39 193 15-9 227-190-34 12-33-8-53 9-23Z" fill="#deb184"/>
+  <circle cx="240" cy="141" r="116" fill="#c5cbd6"/>
+  <circle cx="240" cy="141" r="116" fill="url(#grain)" opacity=".45"/>
+  <g stroke="#292f41" stroke-width="5" stroke-linejoin="round">
+    <path d="m99 151-37-38m41 35 42-41" fill="none"/>
+    <rect x="42" y="150" width="188" height="107" rx="8" fill="#a7c4bc"/>
+    <rect x="55" y="163" width="135" height="78" rx="18" fill="#eae3c4"/>
+    <path d="m90 197 55 0m-28-22v43" stroke="#b95943" stroke-width="10"/>
+    <circle cx="209" cy="177" r="7" fill="#292f41"/>
+    <path d="m204 201 11 0m-11 12h11m-11 12h11" stroke-width="3"/>
+    <path d="m214 107-22 11 25-33q32-19 49-8-4-43 24-44 31-1 19 34l25 7-25 10q20 39-16 51-45 10-79-28Z" fill="#ece8d8"/>
+    <path d="m236 85q21-9 47 30-27 12-47-30Z" fill="#6d829a"/>
+    <circle cx="293" cy="52" r="5" fill="#292f41" stroke="none"/>
+    <path d="m268 133-8 18m26-17 9 15" fill="none"/>
+  </g>
+  <ellipse cx="205" cy="146" rx="177" ry="49" transform="rotate(-25 205 146)" fill="none" stroke="#bd6046" stroke-width="4"/>
+  <path d="m37 43 48 2-1 13-48-3m200 192 43 3-3 13-43-3" fill="#f5ebcd" opacity=".85"/>
+</svg>

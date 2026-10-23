@@ -1,0 +1,50 @@
+/* Scoped original compositions: never restyle the ten illustrated grammars. */
+.poster.original { background: var(--bg); }
+.original .p-title { line-height: .98; }
+.original .fx-cond { font-family: var(--cond); font-weight: 800; letter-spacing: -.005em; }
+.original .fx-serif { font-family: var(--serif); font-weight: 400; line-height: 1.04; letter-spacing: .01em; }
+.original .fx-boxes { line-height: .94; }
+.original .fx-boxes .ln { padding: .03em .14em; margin-bottom: .06em; }
+.original .fx-wall .ln { width: 100%; }
+.original .box-cream { background: #F4EEDD; color: #191919; }
+.original .box-ink { background: #191919; color: #F4EEDD; }
+.original .tx-cream { color: #F4EEDD; }
+.original .tx-ink { color: #191919; }
+.original .fx-glow { color: #F4EEDD; text-shadow: 0 0 1.2cqw rgb(255 255 255 / .25); }
+.original .p-brand { left: auto; right: auto; top: auto; display: block; font-weight: 700; font-size: 3.1cqw; letter-spacing: .05em; }
+.original .p-brand.bar { left: 0; right: 0; top: 0; height: 9cqw; display: flex; justify-content: space-between; align-items: center; padding: 0 4cqw; gap: 2cqw; background: #191919; color: #F4EEDD; }
+.original .p-brand.bar span { display: inline-flex; align-items: center; gap: 1.2cqw; }
+.original .p-brand.bar.inset { left: 3cqw; right: 3cqw; top: 3cqw; height: 10cqw; font-size: 3.6cqw; }
+.original .p-brand.line { left: 8cqw; right: 8cqw; top: 5cqw; display: flex; justify-content: space-between; }
+.original .p-brand.swiss { left: 2cqw; top: 2.5cqw; font-family: var(--cond); font-weight: 800; font-size: 10cqw; letter-spacing: 0; }
+.original .p-brand.swiss-date { top: 0; height: 18cqw; display: flex; align-items: center; justify-content: center; font-family: var(--cond); font-weight: 800; font-size: 7.5cqw; letter-spacing: 0; }
+.original .p-brand.glow { left: 6cqw; top: 5cqw; font-size: 5.4cqw; letter-spacing: .03em; }
+.original .p-brand.glow small { display: flex; align-items: center; gap: 1.2cqw; font-size: 3cqw; margin-top: 1.4cqw; letter-spacing: .08em; }
+.original .p-brand.quiet { left: 8cqw; right: 8cqw; top: 4cqw; display: flex; justify-content: space-between; align-items: baseline; }
+.original .p-brand.quiet .serif { font-family: var(--serif); font-weight: 400; font-size: 6cqw; letter-spacing: .25em; }
+.original .p-brand.plain { display: inline-flex; align-items: center; gap: 1.2cqw; font-size: 3.4cqw; }
+.original .p-kicker { position: absolute; font-size: 3.6cqw; line-height: 1.7; letter-spacing: .06em; }
+.original .p-kicker.serif { font-family: var(--serif); }
+.original .p-kicker.small { font-size: 3.1cqw; }
+.original .p-label { position: absolute; font-weight: 700; font-size: 2.9cqw; letter-spacing: .05em; white-space: nowrap; }
+.original .p-label.big { font-family: var(--cond); font-weight: 800; font-size: 5cqw; letter-spacing: .01em; }
+.original .p-blurb { max-height: none; font-size: 3.1cqw; line-height: 1.22; }
+.original .bl-sticker { padding: 1cqw 2cqw; font-size: 3cqw; }
+.original .bl-serif { font-family: var(--serif); font-size: 3.6cqw; line-height: 1.08; }
+.original .bl-big { font-size: 4.1cqw; }
+.original .bl-bold { font-weight: 600; }
+.original .bl-grid { font-size: 3cqw; }
+.original .bl-glow { font-size: 3cqw; }
+/* Leave the source-copy zone intact; the old 104cqw band overlapped it. */
+.original .p-band { top: 114cqw; bottom: 2cqw; display: flex; flex-direction: column; gap: 1cqw; color: var(--b-fg); overflow: hidden; }
+.original .p-band.boxed { background: var(--b-bg); padding: 2.2cqw 3.4cqw; }
+.original .p-band.ruled { border-top: .6cqw solid var(--b-ac); padding-top: 2.6cqw; }
+.original .b-when { font-weight: 800; font-size: 6cqw; line-height: 1; letter-spacing: .01em; white-space: nowrap; }
+.original .band-cond .b-when { font-family: var(--cond); font-size: 7cqw; letter-spacing: .005em; }
+.original .band-serif .b-when { font-family: var(--serif); font-weight: 400; font-size: 7cqw; letter-spacing: .01em; }
+.original .p-band.boxed .b-when { font-size: 6.4cqw; }
+.original .b-where { display: flex; align-items: baseline; gap: 2.4cqw; margin-top: 0; font-weight: 700; font-size: 3.7cqw; letter-spacing: .03em; text-transform: uppercase; line-height: 1.15; }
+.original .b-venue { flex: 1; min-width: 0; }
+.original .b-price { flex: none; color: var(--b-ac); }
+.original .p-band.boxed .b-price { background: var(--b-ac); color: var(--b-bg); padding: .4cqw 1.4cqw; }
+.original .b-kind { margin-top: 0; font-size: 2.3cqw; letter-spacing: .12em; }

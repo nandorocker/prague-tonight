@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+  <title>Melancholy moon</title>
+  <g stroke="#534861" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m115 181 7 91m46-88 20 87m-67 1-24 6m90-7 27 6" fill="none" stroke-width="6"/>
+    <path d="M218 39Q83 4 64 108 47 187 139 210q64 15 111-41-94 24-113-57-11-45 81-73Z" fill="#ded3a3"/>
+    <path d="m82 113 23 2m-5 11-10 21 14 3m-7 25q16-10 27 1" fill="none" stroke-width="3"/>
+    <path d="m131 193-22 18-9-8m63-9 30 15 17-20" fill="none"/>
+    <g fill="#9d907e" stroke="none"><circle cx="105" cy="74" r="8"/><circle cx="88" cy="159" r="5"/><circle cx="147" cy="183" r="11"/><circle cx="178" cy="186" r="4"/></g>
+    <path d="m254 77 3 13 14 3-14 3-3 14-3-14-14-3 14-3Z" fill="#bd7772" stroke="none"/>
+    <circle cx="46" cy="58" r="4" fill="#534861" stroke="none"/>
+  </g>
+</svg>

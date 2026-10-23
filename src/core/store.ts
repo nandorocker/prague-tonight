@@ -4,6 +4,8 @@
 import type { DateKey, FamilyId, Mood, PragueEvent, Span, WallTime } from '../types';
 import type { Overrides } from './curate';
 import { placeText, priceText } from './format';
+import { artworkMap, normalizeArtwork } from '../posters/artwork';
+import type { ArtworkToken } from '../posters/assets';
 
 export interface SavedSnapshot {
   title: string;
@@ -15,6 +17,7 @@ export interface SavedSnapshot {
   sourceUrl: string;
   sourceName: string;
   family: FamilyId;
+  artwork?: ArtworkToken;
 }
 
 export interface SavedItem {
@@ -79,7 +82,7 @@ function read<T>(k: string, fallback: T): T {
 
 const write = (k: string, v: unknown) => ls.set(k, JSON.stringify(v));
 
-export function snapshot(e: PragueEvent, family: FamilyId): SavedSnapshot {
+export function snapshot(e: PragueEvent, family: FamilyId, artwork: ArtworkToken = 'none'): SavedSnapshot {
   return {
     title: e.title,
     start: e.start,
@@ -90,17 +93,24 @@ export function snapshot(e: PragueEvent, family: FamilyId): SavedSnapshot {
     sourceUrl: e.sources[0].url,
     sourceName: e.sources[0].name,
     family,
+    artwork: normalizeArtwork(artwork),
   };
 }
 
 export const store = {
+  artwork(): Map<string, ArtworkToken> {
+    return artworkMap(read<unknown>('pt:artwork', {}));
+  },
+  setArtwork(choices: ReadonlyMap<string, ArtworkToken>) {
+    write('pt:artwork', Object.fromEntries(choices));
+  },
   saves(): SavedItem[] {
     return read<SavedItem[]>('pt:saves', []);
   },
   isSaved(id: string): boolean {
     return this.saves().some((s) => s.id === id);
   },
-  save(e: PragueEvent, family: FamilyId, now: WallTime, fav = false) {
+  save(e: PragueEvent, family: FamilyId, now: WallTime, fav = false, artwork: ArtworkToken = 'none') {
     if (!e.night) return;
     const all = this.saves();
     const existing = all.find((s) => s.id === e.id);
@@ -108,7 +118,7 @@ export const store = {
       if (fav && !existing.fav) this.setFav(e.id, true);
       return;
     }
-    write('pt:saves', [...all, { id: e.id, night: e.night, savedAt: now, fav: fav || undefined, snap: snapshot(e, family) }]);
+    write('pt:saves', [...all, { id: e.id, night: e.night, savedAt: now, fav: fav || undefined, snap: snapshot(e, family, artwork) }]);
   },
   setFav(id: string, fav: boolean) {
     write(
@@ -119,6 +129,12 @@ export const store = {
   unsave(id: string): SavedItem | undefined {
     const all = this.saves();
     const item = all.find((s) => s.id === id);
+    // A direct My Night visit may never have initialized the artwork cache.
+    if (item) {
+      const choices = this.artwork();
+      const token = normalizeArtwork(item.snap.artwork);
+      if (choices.get(id) !== token) { choices.set(id, token); this.setArtwork(choices); }
+    }
     write('pt:saves', all.filter((s) => s.id !== id));
     return item;
   },
