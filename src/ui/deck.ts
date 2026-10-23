@@ -1,5 +1,6 @@
 import type { App, Swipe } from '../app';
-import type { PragueEvent } from '../types';
+import type { FamilyId, PragueEvent } from '../types';
+import type { ArtworkToken } from '../posters/assets';
 import { stillDeckable } from '../core/curate';
 import { applyFilters } from '../core/filters';
 import { esc } from '../core/format';
@@ -26,32 +27,84 @@ const ACTION: Record<Direction, Swipe> = { right: 'save', left: 'pass', up: 'sup
 /** The card that was just undone flies back in from where it left. */
 let returning: { id: string; from: Direction } | null = null;
 
+interface DeckCard {
+  event: PragueEvent;
+  family: FamilyId;
+  artwork: ArtworkToken;
+  element: HTMLElement;
+}
+
+interface DeckView {
+  frame: HTMLElement;
+  stack: HTMLElement;
+  controls: HTMLElement;
+  cards: Map<string, DeckCard>;
+}
+
+const deckViews = new WeakMap<HTMLElement, DeckView>();
+let detachSwipe: (() => void) | null = null;
+
+function deckView(root: HTMLElement): DeckView {
+  const previous = deckViews.get(root);
+  if (previous?.frame.parentElement === root) return previous;
+  const frame = document.createElement('div');
+  frame.className = 'stack-frame';
+  const stack = document.createElement('div');
+  stack.className = 'stack';
+  const controls = document.createElement('div');
+  controls.className = 'controls';
+  root.replaceChildren(frame, controls);
+  const view = { frame, stack, controls, cards: new Map<string, DeckCard>() };
+  deckViews.set(root, view);
+  return view;
+}
+
+function deckCard(view: DeckView, e: PragueEvent, family: FamilyId, artwork: ArtworkToken): HTMLElement {
+  const previous = view.cards.get(e.id);
+  if (previous?.event === e && previous.family === family && previous.artwork === artwork) return previous.element;
+  previous?.element.remove();
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.dataset.eventId = e.id;
+  card.setAttribute('role', 'group');
+  card.setAttribute('aria-roledescription', 'poster');
+  card.setAttribute('aria-label', `${e.title}. Tap for details. Right arrow saves, left passes, up marks a favorite.`);
+  card.innerHTML = `${renderPoster(e, family, artwork).html}
+    <div class="stamp stamp-save" aria-hidden="true"><span>${esc(word(e.id, 'right'))}</span></div>
+    <div class="stamp stamp-pass" aria-hidden="true"><span>${esc(word(e.id, 'left'))}</span></div>
+    <div class="stamp stamp-super" aria-hidden="true"><span>${star('currentColor', '0.8em')} ${esc(word(e.id, 'up'))}</span></div>`;
+  view.cards.set(e.id, { event: e, family, artwork, element: card });
+  view.stack.append(card);
+  // Fit once, including the hidden look-ahead card, before it reaches the front.
+  void document.fonts.ready.then(() => {
+    if (card.isConnected) fitDom(card);
+  });
+  return card;
+}
+
 export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
+  detachSwipe?.();
+  detachSwipe = null;
   const cur = app.curation();
   const decisions = store.decisions();
   const live = cur.deck.filter((e) => stillDeckable(e, app.now));
   const { items: deck, hiddenUnknownPrice } = applyFilters(live, app.filters);
   const savedIds = new Set(store.saves().map((s) => s.id));
   const remaining = deck.filter((e) => !decisions[e.id] && !savedIds.has(e.id));
-  const [top, next] = remaining;
-
-  root.innerHTML = '';
-  const frame = document.createElement('div');
-  frame.className = 'stack-frame';
-  root.append(frame);
-
-  const controls = document.createElement('div');
-  controls.className = 'controls';
+  const [top] = remaining;
+  const view = deckView(root);
+  const { frame, stack, controls } = view;
   controls.innerHTML = `
     <button type="button" class="ctl ctl-undo" aria-label="Undo" title="Undo (U)" ${app.undo.length ? '' : 'disabled'}>${icon.undo}</button>
     <button type="button" class="ctl ctl-pass" aria-label="Pass" title="Pass (←)" ${top ? '' : 'disabled'}>${icon.x}</button>
     <button type="button" class="ctl ctl-save" aria-label="Save to My Night" title="Save (→)" ${top ? '' : 'disabled'}>${icon.heartFill}</button>
     <button type="button" class="ctl ctl-super" aria-label="Favorite" title="Favorite (↑)" ${top ? '' : 'disabled'}>${star('currentColor', '1em')}</button>`;
-  root.append(controls);
   controls.querySelector('.ctl-undo')!.addEventListener('click', () => undo(app, rerender));
 
   if (!top) {
-    frame.append(deck.length ? endOfDeck(app, decisions, rerender) : emptyState(app, live.length > 0, hiddenUnknownPrice, rerender));
+    stack.replaceChildren();
+    view.cards.clear();
+    frame.replaceChildren(deck.length ? endOfDeck(app, decisions, rerender) : emptyState(app, live.length > 0, hiddenUnknownPrice, rerender));
     deckKeys = (ev) => {
       if (ev.key.toLowerCase() === 'u' || ev.key === 'Backspace') {
         ev.preventDefault();
@@ -61,35 +114,39 @@ export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
     return;
   }
 
-  // The frame takes whatever height is left; the stack keeps 5:7 inside it.
-  const stack = document.createElement('div');
-  stack.className = 'stack';
-  frame.append(stack);
-  if (next) {
-    const n = document.createElement('div');
-    n.className = 'card next';
-    n.setAttribute('aria-hidden', 'true');
-    n.innerHTML = renderPoster(next, cur.family.get(next.id)!, app.artworkOf(next)).html;
-    stack.append(n);
+  if (stack.parentElement !== frame) frame.replaceChildren(stack);
+  // Keep two visible cards and one fitted look-ahead. Promotion changes classes,
+  // not DOM identity, so the browser can retain the existing poster's rendering.
+  const upcoming = remaining.slice(0, 3);
+  const ids = new Set(upcoming.map((e) => e.id));
+  for (const [id, cached] of view.cards) {
+    if (ids.has(id)) continue;
+    cached.element.remove();
+    view.cards.delete(id);
   }
-  const card = document.createElement('div');
-  card.className = 'card top';
+  const cards = upcoming.map((e, i) => {
+    const card = deckCard(view, e, cur.family.get(e.id)!, app.artworkOf(e));
+    card.className = `card ${i === 0 ? 'top' : i === 1 ? 'next' : 'preload'}`;
+    card.style.removeProperty('transition');
+    card.style.removeProperty('transform');
+    card.style.removeProperty('opacity');
+    card.querySelectorAll<HTMLElement>('.stamp').forEach((stamp) => stamp.style.removeProperty('opacity'));
+    card.tabIndex = i === 0 ? 0 : -1;
+    card.inert = i !== 0;
+    if (i === 0) card.removeAttribute('aria-hidden');
+    else card.setAttribute('aria-hidden', 'true');
+    return card;
+  });
+  const card = cards[0];
   if (returning?.id === top.id) card.classList.add(`return-${returning.from}`);
   returning = null;
-  card.tabIndex = 0;
-  card.setAttribute('role', 'group');
-  card.setAttribute('aria-roledescription', 'poster');
-  card.setAttribute('aria-label', `${top.title}. Tap for details. Right arrow saves, left passes, up marks a favorite.`);
-  card.innerHTML = `${renderPoster(top, cur.family.get(top.id)!, app.artworkOf(top)).html}
-    <div class="stamp stamp-save" aria-hidden="true"><span>${esc(word(top.id, 'right'))}</span></div>
-    <div class="stamp stamp-pass" aria-hidden="true"><span>${esc(word(top.id, 'left'))}</span></div>
-    <div class="stamp stamp-super" aria-hidden="true"><span>${star('currentColor', '0.8em')} ${esc(word(top.id, 'up'))}</span></div>`;
-  stack.append(card);
 
   let committed = false;
   const commit = (dir: Direction, fromButton = false) => {
     if (committed) return;
     committed = true;
+    detachSwipe?.();
+    detachSwipe = null;
     app.busy = true;
     refocusCard = document.activeElement === card;
     controls.querySelectorAll('button').forEach((b) => (b.disabled = true));
@@ -103,7 +160,7 @@ export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
       fromButton,
     );
   };
-  attachSwipe(card, {
+  detachSwipe = attachSwipe(card, {
     onCommit: (dir) => commit(dir),
     onTap: () => committed || openDetails(app, top),
     onDragState: (d) => (app.busy = d),
@@ -127,8 +184,6 @@ export function renderDeck(app: App, root: HTMLElement, rerender: () => void) {
     else return;
     ev.preventDefault();
   };
-
-  void document.fonts.ready.then(() => fitDom(stack));
 }
 
 /** Keep keyboard focus on the deck card across swipes. */
@@ -138,6 +193,8 @@ let refocusCard = false;
 export let deckKeys: ((ev: KeyboardEvent) => void) | null = null;
 export function clearDeckKeys() {
   deckKeys = null;
+  detachSwipe?.();
+  detachSwipe = null;
 }
 
 function openDetails(app: App, e: PragueEvent) {
