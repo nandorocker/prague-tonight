@@ -20,6 +20,7 @@ const STAMP_CLASS: Record<Direction, string> = { right: 'is-saving', left: 'is-p
  * word is readable; from a drag it's already showing.
  */
 export function flyOut(card: HTMLElement, dir: Direction, done: () => void, fromButton = false) {
+  card.querySelectorAll<HTMLElement>('.stamp').forEach((stamp) => stamp.style.removeProperty('opacity'));
   card.classList.add(STAMP_CLASS[dir]);
   if (reducedMotion()) {
     setTimeout(done, fromButton ? 350 : 0);
@@ -48,12 +49,31 @@ export function attachSwipe(card: HTMLElement, h: Handlers) {
   let dx = 0;
   let dy = 0;
   let dragging = false;
+  let frame: number | null = null;
+  const controller = new AbortController();
+  const options = { signal: controller.signal };
+  const save = card.querySelector<HTMLElement>('.stamp-save');
+  const pass = card.querySelector<HTMLElement>('.stamp-pass');
+  const superStamp = card.querySelector<HTMLElement>('.stamp-super');
 
   const setStamp = (x: number, y: number) => {
     const up = -y > Math.abs(x) ? Math.max(0, Math.min(1, -y / 110)) : 0;
-    card.style.setProperty('--save', String(up ? 0 : Math.max(0, Math.min(1, x / 90))));
-    card.style.setProperty('--pass', String(up ? 0 : Math.max(0, Math.min(1, -x / 90))));
-    card.style.setProperty('--super', String(up));
+    if (save) save.style.opacity = String(up ? 0 : Math.max(0, Math.min(1, x / 90)));
+    if (pass) pass.style.opacity = String(up ? 0 : Math.max(0, Math.min(1, -x / 90)));
+    if (superStamp) superStamp.style.opacity = String(up);
+  };
+
+  const paint = () => {
+    frame = null;
+    // Downward drags only give a little: there's nothing to commit there.
+    const y = dy > 0 ? dy * 0.25 : dy;
+    card.style.transform = `translate(${dx}px, ${y}px) rotate(${dx / 22}deg)`;
+    setStamp(dx, dy);
+  };
+
+  const cancelFrame = () => {
+    if (frame !== null) cancelAnimationFrame(frame);
+    frame = null;
   };
 
   const reset = () => {
@@ -76,7 +96,7 @@ export function attachSwipe(card: HTMLElement, h: Handlers) {
     } catch {
       /* pointer already released */
     }
-  });
+  }, options);
 
   card.addEventListener('pointermove', (ev) => {
     if (ev.pointerId !== id) return;
@@ -87,17 +107,17 @@ export function attachSwipe(card: HTMLElement, h: Handlers) {
       h.onDragState?.(true);
     }
     if (!dragging) return;
-    // Downward drags only give a little: there's nothing to commit there.
-    const y = dy > 0 ? dy * 0.25 : dy;
-    card.style.transform = `translate(${dx}px, ${y}px) rotate(${dx / 22}deg)`;
-    setStamp(dx, dy);
-  });
+    if (frame === null) frame = requestAnimationFrame(paint);
+  }, options);
 
   const end = (ev: PointerEvent) => {
     if (ev.pointerId !== id) return;
     id = null;
+    cancelFrame();
     const dt = performance.now() - t0;
     if (dragging) {
+      if (ev.type !== 'pointercancel') paint();
+      dragging = false;
       h.onDragState?.(false);
       if (ev.type === 'pointercancel') {
         reset();
@@ -120,6 +140,14 @@ export function attachSwipe(card: HTMLElement, h: Handlers) {
     reset();
     if (ev.type === 'pointerup' && dt < 600) h.onTap();
   };
-  card.addEventListener('pointerup', end);
-  card.addEventListener('pointercancel', end);
+  card.addEventListener('pointerup', end, options);
+  card.addEventListener('pointercancel', end, options);
+
+  return () => {
+    controller.abort();
+    cancelFrame();
+    if (dragging) h.onDragState?.(false);
+    dragging = false;
+    id = null;
+  };
 }

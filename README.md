@@ -8,6 +8,7 @@ First-version prototype built from the creative handoff (product brief, wirefram
 pnpm install
 pnpm dev          # http://127.0.0.1:5173
 pnpm test         # vitest: time windows, curation, dedupe, posters
+pnpm test:deck    # headless Chrome: card reuse, dragging, keyboard, undo
 pnpm build        # typecheck + production build
 ```
 
