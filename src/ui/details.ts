@@ -71,7 +71,7 @@ export function renderDetails(app: App, root: HTMLElement, id: string, rerender:
 
   sec.innerHTML = `
     <div class="det-poster ${e.canceled ? 'is-canceled' : ''}">${poster.html}${e.canceled ? '<div class="cancel-band">CANCELED</div>' : ''}</div>
-    <p class="note artwork-credit">${art ? `Illustrative artwork, not event photography: ${esc(art.label)}. ${esc(art.attribution)} · ${esc(art.rights)}${art.sourceUrl ? ` · <a href="${esc(art.sourceUrl)}" target="_blank" rel="noopener">Artwork source</a>` : ''}.` : 'Image-free poster design. Poster artwork is illustrative, not event photography.'}</p>
+    ${art ? `<p class="note artwork-credit">Illustrative artwork, not event photography: ${esc(art.label)}. ${esc(art.attribution)} · ${esc(art.rights)}${art.sourceUrl ? ` · <a href="${esc(art.sourceUrl)}" target="_blank" rel="noopener">Artwork source</a>` : ''}.</p>` : ''}
     ${status.length ? `<div class="badges">${badges(status)}</div>` : ''}
     <h1 class="ev-title" tabindex="-1">${esc(e.title)}</h1>
     ${e.blurb ? `<p class="lead">${esc(e.blurb)}</p>` : ''}

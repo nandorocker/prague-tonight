@@ -91,8 +91,7 @@ export function replaceArtworkWithFallback(poster: HTMLElement, reason: 'load' |
   plain.dataset.requestedArtwork = poster.dataset.artwork;
   poster.replaceWith(plain);
   fallback.remove();
-  const credit = plain.closest('.details')?.querySelector<HTMLElement>('.artwork-credit');
-  if (credit) credit.textContent = `Image-free poster design${reason === 'load' ? ' (illustrative artwork could not load)' : ' to keep the full headline readable'}. Poster artwork is illustrative, not event photography.`;
+  plain.closest('.details')?.querySelector('.artwork-credit')?.remove();
   return plain;
 }
 
